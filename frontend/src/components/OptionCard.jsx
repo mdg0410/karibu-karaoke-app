@@ -1,9 +1,35 @@
 import React from 'react'
+import { postApi } from '../services/api'
 
-function OptionCard({ title, description, buttonText, path }) {
-  const handleClick = () => {
+function OptionCard({ title, description, buttonText, path, onApiResponse }) {
+  const handleClick = async () => {
     console.log(`Navigating to ${path}`)
-    // Navigation would be implemented here when we add routing
+    
+    // Si es la ruta de cliente, hacer una solicitud al backend
+    if (path === '/client') {
+      try {
+        // Crear un nuevo cliente de prueba
+        const data = {
+          nombre: 'Cliente de Prueba',
+          email: `cliente_${Date.now()}@example.com`
+        };
+        
+        const response = await postApi('cliente', data);
+        
+        // Mostrar mensaje de éxito
+        onApiResponse({
+          message: `¡Integración exitosa! Cliente creado con ID: ${response.data._id}`,
+          type: 'success'
+        });
+      } catch (error) {
+        // Mostrar mensaje de error
+        onApiResponse({
+          message: `Error en la integración: ${error.message}`,
+          type: 'error'
+        });
+      }
+    }
+    // Aquí se implementaría la navegación cuando se agregue routing
   }
 
   return (

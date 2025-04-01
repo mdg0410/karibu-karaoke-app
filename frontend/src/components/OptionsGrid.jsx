@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import OptionCard from './OptionCard';
 
-function OptionsGrid() {
+function OptionsGrid({ onApiResponse }) {
   const { t } = useTranslation();
   
   const options = [
@@ -35,6 +35,7 @@ function OptionsGrid() {
           description={option.description}
           buttonText={option.buttonText}
           path={option.path}
+          onApiResponse={onApiResponse}
         />
       ))}
     </div>

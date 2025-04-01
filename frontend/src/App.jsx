@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Navbar from './components/Navbar';
 import OptionsGrid from './components/OptionsGrid';
+import Toast from './components/Toast';
 
 function App() {
   const { t } = useTranslation();
+  const [toast, setToast] = useState({ message: '', type: 'success' });
+
+  const handleApiResponse = ({ message, type }) => {
+    setToast({ message, type });
+  };
+
+  const clearToast = () => {
+    setToast({ message: '', type: 'success' });
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 overflow-hidden">
@@ -17,9 +27,15 @@ function App() {
           <p className="text-xl mb-12 text-white/70 max-w-2xl mx-auto">
             {t('main.choosePortal')}
           </p>
-          <OptionsGrid />
+          <OptionsGrid onApiResponse={handleApiResponse} />
         </div>
       </main>
+      
+      <Toast 
+        message={toast.message} 
+        type={toast.type} 
+        onClose={clearToast} 
+      />
     </div>
   );
 }
