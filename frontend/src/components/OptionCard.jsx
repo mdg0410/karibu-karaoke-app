@@ -1,36 +1,72 @@
-import React from 'react'
-import { postApi } from '../services/api'
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { postApi } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 function OptionCard({ title, description, buttonText, path, onApiResponse }) {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  
   const handleClick = async () => {
-    console.log(`Navigating to ${path}`)
+    console.log(`Navegando a ${path}`);
     
-    // Si es la ruta de cliente, hacer una solicitud al backend
-    if (path === '/client') {
-      try {
-        // Crear un nuevo cliente de prueba
-        const data = {
+    try {
+      let userRole = '';
+      let userData = {};
+      
+      // Determinar el tipo de usuario según la ruta
+      if (path === '/client') {
+        userRole = 'cliente';
+        userData = {
           nombre: 'Cliente de Prueba',
           email: `cliente_${Date.now()}@example.com`
         };
-        
-        const response = await postApi('cliente', data);
-        
-        // Mostrar mensaje de éxito
-        onApiResponse({
-          message: `¡Integración exitosa! Cliente creado con ID: ${response.data._id}`,
-          type: 'success'
-        });
-      } catch (error) {
-        // Mostrar mensaje de error
-        onApiResponse({
-          message: `Error en la integración: ${error.message}`,
-          type: 'error'
-        });
+      } else if (path === '/admin') {
+        userRole = 'admin';
+        userData = {
+          nombre: 'Admin de Prueba',
+          email: `admin_${Date.now()}@example.com`,
+          password: 'admin123'
+        };
+      } else if (path === '/staff') {
+        userRole = 'staff';
+        userData = {
+          nombre: 'Staff de Prueba',
+          email: `staff_${Date.now()}@example.com`,
+          password: 'staff123'
+        };
       }
+      
+      // Crear usuario si es necesario
+      const response = await postApi(userRole, userData);
+      
+      if (response.success || response.data) {
+        // Iniciar sesión con el usuario creado
+        const result = await login(userData.email, userRole);
+        
+        if (result.success) {
+          // Mostrar mensaje de éxito
+          onApiResponse({
+            message: `¡Integración exitosa! ${title} creado y autenticado`,
+            type: 'success'
+          });
+          
+          // Navegar a la ruta correspondiente
+          navigate(path);
+        } else {
+          throw new Error(result.message);
+        }
+      } else {
+        throw new Error('Error al crear usuario');
+      }
+    } catch (error) {
+      // Mostrar mensaje de error
+      onApiResponse({
+        message: `Error en la integración: ${error.message}`,
+        type: 'error'
+      });
     }
-    // Aquí se implementaría la navegación cuando se agregue routing
-  }
+  };
 
   return (
     <div className="bg-dark-card border-3 border-white rounded-none p-10 text-center flex flex-col h-full shadow-brutal-lg relative overflow-hidden transition-transform hover:translate-y-[-5px] hover:border-primary
@@ -50,7 +86,7 @@ function OptionCard({ title, description, buttonText, path, onApiResponse }) {
         {buttonText}
       </button>
     </div>
-  )
+  );
 }
 
-export default OptionCard
+export default OptionCard;
