@@ -1,0 +1,13 @@
+node_modules
+dist
+package-lock.json
+
+.env
+*.log
+*.env
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+*.env.staging.local
+*.env.staging.local

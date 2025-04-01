@@ -1,0 +1,31 @@
+{
+  "navbar": {
+    "title": "Karibu Karaoke",
+    "getStarted": "Get Started"
+  },
+  "main": {
+    "welcome": "Welcome to Karibu Karaoke",
+    "choosePortal": "Choose your access portal below"
+  },
+  "options": {
+    "client": {
+      "title": "Client",
+      "description": "Access as a client to book karaoke sessions and manage your reservations",
+      "button": "Enter as Client"
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "Administrative portal to manage the entire system, users, and settings",
+      "button": "Enter as Admin"
+    },
+    "staff": {
+      "title": "Staff",
+      "description": "Staff portal to manage daily operations, schedules, and customer service",
+      "button": "Enter as Staff"
+    }
+  },
+  "language": {
+    "en": "English",
+    "es": "Spanish"
+  }
+}
