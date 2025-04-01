@@ -27,7 +27,7 @@ function OptionsGrid({ onApiResponse }) {
   ]
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mt-12 relative before:content-[''] before:absolute before:w-full before:h-full before:bg-[linear-gradient(to_right,var(--tw-gradient-stops))] before:from-primary/5 before:via-transparent before:to-primary/5 before:bg-[length:40px_40px] before:-z-10 before:opacity-30">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 md:gap-10 mt-8 sm:mt-10 md:mt-12 relative before:content-[''] before:absolute before:w-full before:h-full before:bg-[linear-gradient(to_right,var(--tw-gradient-stops))] before:from-primary/5 before:via-transparent before:to-primary/5 before:bg-[length:40px_40px] before:-z-10 before:opacity-30">
       {options.map((option, index) => (
         <OptionCard 
           key={index}
