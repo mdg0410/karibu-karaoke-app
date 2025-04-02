@@ -42,13 +42,9 @@ const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
       const response = await registrarCliente(formData, mesaId);
       
       if (response.success) {
+        // La respuesta ahora contiene los datos directamente como los devuelve el backend
         onSubmitSuccess({
-          cliente: {
-            id: response.data.id,
-            nombre: response.data.nombre,
-            email: response.data.email,
-            telefono: response.data.telefono
-          },
+          cliente: response.data || response.cliente,
           token: response.token
         });
       } else {

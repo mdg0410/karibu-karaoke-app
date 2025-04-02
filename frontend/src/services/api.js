@@ -31,7 +31,6 @@ const fetchConfig = (method, body = null) => {
     method,
     headers: getHeaders(),
     mode: 'cors',
-    credentials: 'include',
   };
   
   if (body) {

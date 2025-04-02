@@ -8,7 +8,7 @@ import mesasRoutes from './mesasRoutes';
 const router = express.Router();
 
 // Rutas principales
-router.use('/cliente', clienteRoutes);
+router.use('/clientes', clienteRoutes);
 router.use('/admin', adminRoutes);
 router.use('/staff', staffRoutes);
 router.use('/auth', authRoutes);

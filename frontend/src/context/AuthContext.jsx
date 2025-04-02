@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { postApi } from '../services/api';
+import { postApi, getApi } from '../services/api';
 import * as mockFallback from '../services/mockFallback';
 
 const AuthContext = createContext();
@@ -26,9 +26,6 @@ export const AuthProvider = ({ children }) => {
   // Función para determinar si se debe usar el fallback
   const shouldUseFallback = (error) => {
     return error.message.includes('NetworkError') || 
-           error.message.includes('CORS') || 
-           error.message.includes('certificate') || 
-           error.message.includes('SSL') ||
            error.message.includes('Failed to fetch');
   };
 
@@ -96,17 +93,25 @@ export const AuthProvider = ({ children }) => {
       setError('');
       
       try {
-        const response = await postApi('mesas/verificar', { mesaId });
+        // Usar la nueva ruta GET para verificar mesas
+        const response = await getApi(`mesas/verificar/${mesaId}`);
         return response;
       } catch (apiError) {
-        // Si hay error de red o certificado, usar respaldo
-        if (shouldUseFallback(apiError)) {
-          setUseFallback(true);
-          console.warn('Usando servicio de respaldo para verificación de mesa debido a error de conexión:', apiError.message);
-          return mockFallback.verificarMesa(mesaId);
+        // Intento con POST como fallback por compatibilidad
+        try {
+          console.log('Intentando con método POST como fallback...');
+          const responseFallback = await postApi('mesas/verificar', { mesaId });
+          return responseFallback;
+        } catch (postError) {
+          // Si hay error de red o certificado, usar mock fallback
+          if (shouldUseFallback(apiError)) {
+            setUseFallback(true);
+            console.warn('Usando servicio de respaldo para verificación de mesa debido a error de conexión:', apiError.message);
+            return mockFallback.verificarMesa(mesaId);
+          }
+          
+          throw apiError;
         }
-        
-        throw apiError;
       }
     } catch (error) {
       console.error('Error al verificar mesa:', error);

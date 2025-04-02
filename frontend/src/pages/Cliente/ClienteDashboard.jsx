@@ -13,7 +13,7 @@ import MesaSelectionModal from '../../components/MesaSelectionModal';
 import ClienteInfoModal from '../../components/ClienteInfoModal';
 
 // Importar servicios
-import { postApi } from '../../services/api';
+import { postApi, getApi } from '../../services/api';
 
 // Importar contexto de autenticación
 import { useAuth } from '../../context/AuthContext';
@@ -49,11 +49,8 @@ const ClienteDashboard = () => {
         if (userData.role === 'cliente' && userData.mesaId) {
           // Verificar que la mesa sigue activa
           try {
-            const response = await postApi('mesas/verificar', { 
-              mesaId: userData.mesaId,
-              clienteId: userData.id,
-              token: userData.token
-            });
+            // Usando la nueva ruta GET para verificar mesas
+            const response = await getApi(`mesas/verificar/${userData.mesaId}`);
             
             if (response.success && response.disponible) {
               setCurrentUser(userData);
@@ -70,8 +67,32 @@ const ClienteDashboard = () => {
               navigate('/');
             }
           } catch (error) {
-            console.error('Error verificando mesa:', error);
-            setError('Error al verificar la mesa.');
+            // Intentar con el método POST como fallback
+            try {
+              console.log('Intentando con método POST como fallback...');
+              const responseFallback = await postApi('mesas/verificar', { 
+                mesaId: userData.mesaId,
+                clienteId: userData.id,
+                token: userData.token
+              });
+              
+              if (responseFallback.success && responseFallback.disponible) {
+                setCurrentUser(userData);
+                setLoading(false);
+                setShowWelcome(true);
+                setTimeout(() => setShowWelcome(false), 3000);
+                return;
+              } else {
+                localStorage.removeItem('user');
+                localStorage.removeItem('mesaId');
+                localStorage.removeItem('clienteToken');
+                setError('Tu sesión ha expirado o la mesa ya no está disponible.');
+                navigate('/');
+              }
+            } catch (postError) {
+              console.error('Error verificando mesa:', postError);
+              setError('Error al verificar la mesa.');
+            }
           }
         }
       }
@@ -79,7 +100,8 @@ const ClienteDashboard = () => {
       // Si hay mesaId en la URL, verificarla
       if (mesaIdFromUrl) {
         try {
-          const response = await postApi('mesas/verificar', { mesaId: mesaIdFromUrl });
+          // Usando la nueva ruta GET para verificar mesas
+          const response = await getApi(`mesas/verificar/${mesaIdFromUrl}`);
           
           if (response.success && response.disponible) {
             setSelectedMesa(mesaIdFromUrl);
@@ -89,9 +111,23 @@ const ClienteDashboard = () => {
             navigate('/');
           }
         } catch (error) {
-          console.error('Error verificando mesa desde URL:', error);
-          setError('Error al verificar la mesa.');
-          navigate('/');
+          // Intentar con el método POST como fallback
+          try {
+            console.log('Intentando con método POST como fallback...');
+            const responseFallback = await postApi('mesas/verificar', { mesaId: mesaIdFromUrl });
+            
+            if (responseFallback.success && responseFallback.disponible) {
+              setSelectedMesa(mesaIdFromUrl);
+              setShowClienteInfoModal(true);
+            } else {
+              setError('Mesa no disponible o no existe.');
+              navigate('/');
+            }
+          } catch (postError) {
+            console.error('Error verificando mesa desde URL:', postError);
+            setError('Error al verificar la mesa.');
+            navigate('/');
+          }
         }
       } else {
         // Si no hay mesa en URL ni usuario guardado, mostrar modal de selección
