@@ -37,108 +37,71 @@ const ClienteDashboard = () => {
   useEffect(() => {
     const checkAuthAndMesa = async () => {
       setLoading(true);
-      // Comprobar si hay un número de mesa en la URL
-      const mesaIdFromUrl = params.mesaId;
+      setError('');
       
-      // Obtener datos del localStorage
-      const storedUser = localStorage.getItem('user');
-      
-      // Si hay un usuario autenticado con rol cliente, continuar
-      if (storedUser) {
-        const userData = JSON.parse(storedUser);
-        if (userData.role === 'cliente' && userData.mesaId) {
-          // Verificar que la mesa sigue activa
-          try {
-            // Usando la nueva ruta GET para verificar mesas
-            const response = await getApi(`mesas/verificar/${userData.mesaId}`);
+      try {
+        // Obtener datos del localStorage
+        const storedUser = localStorage.getItem('user');
+        const mesaIdFromUrl = params.mesaId;
+        
+        // Si no hay mesaId en la URL, redirigir al inicio
+        if (!mesaIdFromUrl) {
+          navigate('/', { replace: true });
+          return;
+        }
+
+        // Si hay usuario autenticado
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          if (userData.role === 'cliente') {
+            // Establecer el usuario en el contexto
+            setCurrentUser(userData);
             
-            if (response.success && response.disponible) {
-              setCurrentUser(userData);
+            // Si la mesa coincide, todo está bien
+            if (userData.mesaId === mesaIdFromUrl) {
               setLoading(false);
               setShowWelcome(true);
               setTimeout(() => setShowWelcome(false), 3000);
               return;
-            } else {
-              // La mesa ya no está disponible o la sesión expiró
-              localStorage.removeItem('user');
-              localStorage.removeItem('mesaId');
-              localStorage.removeItem('clienteToken');
-              setError('Tu sesión ha expirado o la mesa ya no está disponible.');
-              navigate('/');
             }
-          } catch (error) {
-            // Intentar con el método POST como fallback
-            try {
-              console.log('Intentando con método POST como fallback...');
-              const responseFallback = await postApi('mesas/verificar', { 
-                mesaId: userData.mesaId,
-                clienteId: userData.id,
-                token: userData.token
-              });
-              
-              if (responseFallback.success && responseFallback.disponible) {
-                setCurrentUser(userData);
-                setLoading(false);
-                setShowWelcome(true);
-                setTimeout(() => setShowWelcome(false), 3000);
-                return;
-              } else {
-                localStorage.removeItem('user');
-                localStorage.removeItem('mesaId');
-                localStorage.removeItem('clienteToken');
-                setError('Tu sesión ha expirado o la mesa ya no está disponible.');
-                navigate('/');
-              }
-            } catch (postError) {
-              console.error('Error verificando mesa:', postError);
-              setError('Error al verificar la mesa.');
-            }
+            
+            // Si la mesa no coincide, actualizar la mesa
+            userData.mesaId = mesaIdFromUrl;
+            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('mesaId', mesaIdFromUrl);
+            setLoading(false);
+            return;
           }
         }
-      }
-      
-      // Si hay mesaId en la URL, verificarla
-      if (mesaIdFromUrl) {
+
+        // Si no hay usuario autenticado, verificar disponibilidad de la mesa
         try {
-          // Usando la nueva ruta GET para verificar mesas
           const response = await getApi(`mesas/verificar/${mesaIdFromUrl}`);
-          
           if (response.success && response.disponible) {
             setSelectedMesa(mesaIdFromUrl);
             setShowClienteInfoModal(true);
-          } else {
-            setError('Mesa no disponible o no existe.');
-            navigate('/');
+            setLoading(false);
+            return;
           }
+          
+          // Si la mesa no está disponible
+          setError('La mesa no está disponible');
+          navigate('/', { replace: true });
         } catch (error) {
-          // Intentar con el método POST como fallback
-          try {
-            console.log('Intentando con método POST como fallback...');
-            const responseFallback = await postApi('mesas/verificar', { mesaId: mesaIdFromUrl });
-            
-            if (responseFallback.success && responseFallback.disponible) {
-              setSelectedMesa(mesaIdFromUrl);
-              setShowClienteInfoModal(true);
-            } else {
-              setError('Mesa no disponible o no existe.');
-              navigate('/');
-            }
-          } catch (postError) {
-            console.error('Error verificando mesa desde URL:', postError);
-            setError('Error al verificar la mesa.');
-            navigate('/');
-          }
+          console.error('Error verificando mesa:', error);
+          setError('Error al verificar la mesa');
+          navigate('/', { replace: true });
         }
-      } else {
-        // Si no hay mesa en URL ni usuario guardado, mostrar modal de selección
-        setShowMesaModal(true);
+      } catch (error) {
+        console.error('Error en checkAuthAndMesa:', error);
+        setError('Error al verificar la autenticación');
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     checkAuthAndMesa();
-  }, [navigate, params, setCurrentUser]);
+  }, [navigate, params.mesaId, setCurrentUser]);
 
   const handleMesaSelected = (mesaId) => {
     setSelectedMesa(mesaId);
@@ -148,7 +111,7 @@ const ClienteDashboard = () => {
 
   const handleClienteRegistrado = (response) => {
     setShowClienteInfoModal(false);
-    setCurrentUser({
+    const userData = {
       id: response.cliente.id,
       nombre: response.cliente.nombre,
       email: response.cliente.email,
@@ -156,8 +119,22 @@ const ClienteDashboard = () => {
       role: 'cliente',
       token: response.token,
       mesaId: selectedMesa
-    });
-    navigate(`/client/${selectedMesa}`);
+    };
+    
+    // Establecer el usuario actual en el contexto
+    setCurrentUser(userData);
+    
+    // Guardar datos en localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('clienteToken', response.token);
+    localStorage.setItem('mesaId', selectedMesa);
+    
+    // Mostrar mensaje de bienvenida
+    setShowWelcome(true);
+    setTimeout(() => setShowWelcome(false), 3000);
+
+    // Forzar el estado de autenticación
+    setLoading(false);
   };
 
   const toggleCarrito = () => {
@@ -168,7 +145,7 @@ const ClienteDashboard = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('mesaId');
     localStorage.removeItem('clienteToken');
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   // Mostrar spinner mientras se carga
@@ -188,7 +165,7 @@ const ClienteDashboard = () => {
           <h2 className="text-xl font-bold mb-3">Error</h2>
           <p>{error}</p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/', { replace: true })}
             className="mt-4 w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
           >
             Volver al Inicio
@@ -202,7 +179,7 @@ const ClienteDashboard = () => {
   if (showMesaModal) {
     return <MesaSelectionModal 
       isOpen={showMesaModal}
-      onClose={() => navigate('/')}
+      onClose={() => navigate('/', { replace: true })}
       onMesaSelected={handleMesaSelected}
     />;
   }
@@ -212,7 +189,7 @@ const ClienteDashboard = () => {
       isOpen={showClienteInfoModal}
       onClose={() => {
         setShowClienteInfoModal(false);
-        navigate('/');
+        navigate('/', { replace: true });
       }}
       onSubmitSuccess={handleClienteRegistrado}
       mesaId={selectedMesa}

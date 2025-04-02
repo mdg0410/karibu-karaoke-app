@@ -143,12 +143,19 @@ export const AuthProvider = ({ children }) => {
             mesaId
           };
           
+          // Establecer el usuario actual en el contexto
           setCurrentUser(userData);
+          
+          // Guardar datos en localStorage
           localStorage.setItem('user', JSON.stringify(userData));
           localStorage.setItem('clienteToken', response.token);
           localStorage.setItem('mesaId', mesaId);
           
-          return { success: true, data: userData, token: response.token };
+          return { 
+            success: true, 
+            cliente: userData,
+            token: response.token 
+          };
         }
         
         throw new Error(response.message || 'Error al registrar cliente');
@@ -173,12 +180,19 @@ export const AuthProvider = ({ children }) => {
             mesaId
           };
           
+          // Establecer el usuario actual en el contexto
           setCurrentUser(userData);
+          
+          // Guardar datos en localStorage
           localStorage.setItem('user', JSON.stringify(userData));
           localStorage.setItem('clienteToken', mockResponse.token);
           localStorage.setItem('mesaId', mesaId);
           
-          return { success: true, data: userData, token: mockResponse.token };
+          return { 
+            success: true, 
+            cliente: userData,
+            token: mockResponse.token 
+          };
         }
         
         throw apiError;

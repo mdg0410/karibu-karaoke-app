@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { postApi } from '../services/api';
@@ -16,6 +16,17 @@ function MesaSelection() {
   const [showClienteInfoModal, setShowClienteInfoModal] = useState(false);
   const [error, setError] = useState('');
 
+  // Verificar si ya hay un usuario autenticado al cargar
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      if (userData.role === 'cliente' && userData.mesaId) {
+        navigate(`/client/${userData.mesaId}`, { replace: true });
+      }
+    }
+  }, [navigate]);
+
   const handleMesaSelected = (mesaId) => {
     setSelectedMesa(mesaId);
     setShowMesaModal(false);
@@ -24,7 +35,7 @@ function MesaSelection() {
 
   const handleClienteRegistrado = (response) => {
     setShowClienteInfoModal(false);
-    setCurrentUser({
+    const userData = {
       id: response.cliente.id,
       nombre: response.cliente.nombre,
       email: response.cliente.email,
@@ -32,8 +43,18 @@ function MesaSelection() {
       role: 'cliente',
       token: response.token,
       mesaId: selectedMesa
-    });
-    navigate(`/client/${selectedMesa}`);
+    };
+    
+    // Establecer el usuario actual en el contexto
+    setCurrentUser(userData);
+    
+    // Guardar datos en localStorage
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('clienteToken', response.token);
+    localStorage.setItem('mesaId', selectedMesa);
+    
+    // Redirigir al dashboard de cliente
+    navigate(`/client/${selectedMesa}`, { replace: true });
   };
 
   // Mostrar modales según el estado
@@ -41,7 +62,7 @@ function MesaSelection() {
     return (
       <MesaSelectionModal 
         isOpen={showMesaModal}
-        onClose={() => navigate('/')}
+        onClose={() => navigate('/', { replace: true })}
         onMesaSelected={handleMesaSelected}
       />
     );
@@ -51,33 +72,16 @@ function MesaSelection() {
     return (
       <ClienteInfoModal 
         isOpen={showClienteInfoModal}
-        onClose={() => {
-          setShowClienteInfoModal(false);
-          navigate('/');
-        }}
+        onClose={() => navigate('/', { replace: true })}
         onSubmitSuccess={handleClienteRegistrado}
         mesaId={selectedMesa}
       />
     );
   }
 
-  // Página de respaldo (aunque normalmente no se mostrará porque
-  // siempre estará uno de los modales activos)
-  return (
-    <div className="flex justify-center items-center h-screen bg-dark p-4">
-      <div className="bg-dark-secondary rounded-lg shadow-xl max-w-md w-full p-6 text-center">
-        <h2 className="text-2xl font-bold mb-4 text-white">
-          {t('mesa.seleccion')}
-        </h2>
-        <button
-          onClick={() => setShowMesaModal(true)}
-          className="mt-4 w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-        >
-          {t('buttons.seleccionarMesa')}
-        </button>
-      </div>
-    </div>
-  );
+  // Si no hay modal activo, redirigir al inicio
+  navigate('/', { replace: true });
+  return null;
 }
 
 export default MesaSelection; 

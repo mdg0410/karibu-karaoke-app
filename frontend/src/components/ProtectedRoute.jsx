@@ -6,24 +6,42 @@ function ProtectedRoute({ children, allowedRoles }) {
   const { currentUser, loading } = useAuth();
   const location = useLocation();
   
-  // Si está cargando, mostrar un spinner o mensaje
+  // Si está cargando, mostrar un spinner
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen bg-dark">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
-  // Si no hay usuario, redirigir a la página de login correspondiente
-  if (!currentUser) {
-    // Determinar la ruta de login basada en el path actual
-    let loginPath = '/';
-    if (location.pathname.startsWith('/admin')) {
-      loginPath = '/admin-login';
-    } else if (location.pathname.startsWith('/staff')) {
-      loginPath = '/staff-login';
-    } else if (location.pathname.startsWith('/client')) {
-      loginPath = '/mesa-selection';
+  // Verificar si hay datos en localStorage aunque currentUser sea null
+  if (!currentUser && allowedRoles.includes('cliente')) {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      if (userData.role === 'cliente') {
+        // Si hay datos válidos en localStorage, mostrar el contenido
+        return children;
+      }
     }
-
-    return <Navigate to={loginPath} state={{ from: location }} replace />;
+  }
+  
+  // Si no hay usuario autenticado
+  if (!currentUser) {
+    // Para rutas de cliente, redirigir al inicio
+    if (allowedRoles.includes('cliente')) {
+      return <Navigate to="/" replace />;
+    }
+    
+    // Para otras rutas, redirigir a su login correspondiente
+    if (location.pathname.startsWith('/admin')) {
+      return <Navigate to="/admin-login" replace />;
+    } else if (location.pathname.startsWith('/staff')) {
+      return <Navigate to="/staff-login" replace />;
+    }
+    
+    return <Navigate to="/" replace />;
   }
 
   // Verificar el rol

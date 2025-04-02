@@ -42,11 +42,22 @@ const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
       const response = await registrarCliente(formData, mesaId);
       
       if (response.success) {
-        // La respuesta ahora contiene los datos directamente como los devuelve el backend
+        // Aseguramos que la respuesta tenga el formato correcto para el callback
+        const clienteData = response.data || response.cliente;
+        
+        // Llamar al callback con el formato esperado
         onSubmitSuccess({
-          cliente: response.data || response.cliente,
+          cliente: {
+            id: clienteData.id,
+            nombre: clienteData.nombre || formData.nombre,
+            email: clienteData.email || formData.email,
+            telefono: clienteData.telefono || formData.telefono
+          },
           token: response.token
         });
+        
+        // Cerrar el modal explícitamente
+        onClose();
       } else {
         setError(response.message || 'Error al registrar cliente');
       }
