@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import Staff from '../models/Staff';
+import User from '../models/User';
 
 // Obtener un miembro del staff por ID
 export const getStaffById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     
-    const staff = await Staff.findById(id);
+    const staff = await User.findOne({ _id: id, role: 'staff' });
     if (!staff) {
       res.status(404).json({ success: false, message: 'Miembro del personal no encontrado' });
       return;
@@ -17,7 +17,8 @@ export const getStaffById = async (req: Request, res: Response): Promise<void> =
       data: {
         id: staff._id,
         nombre: staff.nombre,
-        email: staff.email
+        email: staff.email,
+        role: staff.role
       }
     });
   } catch (error) {
@@ -33,13 +34,15 @@ export const getStaffById = async (req: Request, res: Response): Promise<void> =
 // Crear un nuevo miembro del staff (para pruebas)
 export const createStaff = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { nombre, email, password } = req.body;
+    const { nombre, email, password, adminToken } = req.body;
     
     // Crear el nuevo miembro del staff
-    const staff = new Staff({
+    const staff = new User({
       nombre,
       email,
-      password // En un sistema real, deberíamos encriptar la contraseña
+      password, // En un sistema real, deberíamos encriptar la contraseña
+      role: 'staff',
+      adminToken
     });
     
     await staff.save();
@@ -49,7 +52,8 @@ export const createStaff = async (req: Request, res: Response): Promise<void> =>
       data: {
         id: staff._id,
         nombre: staff.nombre,
-        email: staff.email
+        email: staff.email,
+        role: staff.role
       }
     });
   } catch (error) {

@@ -1,14 +1,16 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IStaff extends Document {
+export interface IUser extends Document {
   nombre: string;
   email: string;
   password: string;
+  role: 'admin' | 'staff' | 'cliente';
+  adminToken?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const StaffSchema: Schema = new Schema(
+const UserSchema: Schema = new Schema(
   {
     nombre: {
       type: String,
@@ -27,6 +29,16 @@ const StaffSchema: Schema = new Schema(
       type: String,
       required: [true, 'La contraseña es obligatoria'],
       minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
+    },
+    role: {
+      type: String,
+      required: [true, 'El rol es obligatorio'],
+      enum: ['admin', 'staff', 'cliente'],
+      default: 'cliente'
+    },
+    adminToken: {
+      type: String,
+      default: null
     }
   },
   {
@@ -34,4 +46,4 @@ const StaffSchema: Schema = new Schema(
   }
 );
 
-export default mongoose.model<IStaff>('Staff', StaffSchema);
+export default mongoose.model<IUser>('User', UserSchema); 

@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import Cliente from '../models/Cliente';
-import Admin from '../models/Admin';
-import Staff from '../models/Staff';
+import User from '../models/User';
 import { generateToken } from '../utils/jwt';
 
 // Login para cliente
@@ -50,7 +49,7 @@ export const loginAdmin = async (req: Request, res: Response): Promise<void> => 
     const { email } = req.body;
     
     // En un sistema real, verificaríamos también la contraseña
-    const admin = await Admin.findOne({ email });
+    const admin = await User.findOne({ email, role: 'admin' });
     if (!admin) {
       res.status(404).json({ success: false, message: 'Administrador no encontrado' });
       return;
@@ -90,7 +89,7 @@ export const loginStaff = async (req: Request, res: Response): Promise<void> => 
     const { email } = req.body;
     
     // En un sistema real, verificaríamos también la contraseña
-    const staff = await Staff.findOne({ email });
+    const staff = await User.findOne({ email, role: 'staff' });
     if (!staff) {
       res.status(404).json({ success: false, message: 'Miembro del personal no encontrado' });
       return;
