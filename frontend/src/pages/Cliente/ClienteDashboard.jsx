@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 // Importar componentes
 import ClienteNavbar from './ClienteNavbar';
@@ -16,13 +16,18 @@ import { useAuth } from '../../context/AuthContext';
 const ClienteDashboard = () => {
   const { t } = useTranslation();
   const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [carritoVisible, setCarritoVisible] = useState(false);
   const [seccionActiva, setSeccionActiva] = useState('bebidas');
 
-  // Verificar si el usuario está autenticado
-  if (!currentUser || currentUser.role !== 'cliente') {
-    return <Navigate to="/" replace />;
-  }
+  useEffect(() => {
+    if (currentUser && currentUser.id) {
+      navigate(`/client/${currentUser.id}`);
+    } else {
+      // Mostrar un diálogo para elegir una mesa si no hay ID
+      console.log('Mostrar diálogo para elegir una mesa');
+    }
+  }, [currentUser, navigate]);
 
   const toggleCarrito = () => {
     setCarritoVisible(!carritoVisible);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 // Componentes
@@ -9,6 +9,10 @@ import Toast from './components/Toast';
 import ClienteDashboard from './pages/Cliente/ClienteDashboard';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import StaffDashboard from './pages/Staff/StaffDashboard';
+import ProtectedRoute from './components/ProtectedRoute';
+import MesaSelection from './pages/MesaSelection';
+import AdminLogin from './pages/AdminLogin';
+import StaffLogin from './pages/StaffLogin';
 
 // Contexto de autenticación
 import { AuthProvider } from './context/AuthContext';
@@ -26,8 +30,8 @@ function App() {
   };
 
   return (
-    <AuthProvider>
-      <Router>
+    <BrowserRouter>
+      <AuthProvider>
         <div className="max-w-7xl mx-auto p-4 sm:p-6 overflow-hidden">
           <Routes>
             <Route 
@@ -49,9 +53,33 @@ function App() {
                 </>
               } 
             />
-            <Route path="/client/*" element={<ClienteDashboard />} />
-            <Route path="/admin/*" element={<AdminDashboard />} />
-            <Route path="/staff/*" element={<StaffDashboard />} />
+            <Route path="/mesa-selection" element={<MesaSelection />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/staff-login" element={<StaffLogin />} />
+            <Route 
+              path="/client/*" 
+              element={
+                <ProtectedRoute allowedRoles={['cliente']}>
+                  <ClienteDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/*" 
+              element={
+                <ProtectedRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/staff/*" 
+              element={
+                <ProtectedRoute allowedRoles={['staff']}>
+                  <StaffDashboard />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           
@@ -61,8 +89,8 @@ function App() {
             onClose={clearToast} 
           />
         </div>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

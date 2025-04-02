@@ -14,5 +14,10 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  define: {
+    'process.env': {
+      REACT_APP_API_URL: JSON.stringify(process.env.REACT_APP_API_URL || 'http://localhost:5000/api')
+    }
   }
 });

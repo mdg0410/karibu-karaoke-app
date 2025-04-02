@@ -1,68 +1,35 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { postApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 function OptionCard({ title, description, buttonText, path, onApiResponse }) {
   const navigate = useNavigate();
   const { login } = useAuth();
   
-  const handleClick = async () => {
+  const handleClick = async (e) => {
+    e.preventDefault(); // Prevenir comportamiento por defecto
     console.log(`Navegando a ${path}`);
     
     try {
-      let userRole = '';
-      let userData = {};
-      
-      // Determinar el tipo de usuario según la ruta
-      if (path === '/client') {
-        userRole = 'cliente';
-        userData = {
-          nombre: 'Cliente de Prueba',
-          email: `cliente_${Date.now()}@example.com`
-        };
-      } else if (path === '/admin') {
-        userRole = 'admin';
-        userData = {
-          nombre: 'Admin de Prueba',
-          email: `admin_${Date.now()}@example.com`,
-          password: 'admin123'
-        };
-      } else if (path === '/staff') {
-        userRole = 'staff';
-        userData = {
-          nombre: 'Staff de Prueba',
-          email: `staff_${Date.now()}@example.com`,
-          password: 'staff123'
-        };
-      }
-      
-      // Crear usuario si es necesario
-      const response = await postApi(userRole, userData);
-      
-      if (response.success || response.data) {
-        // Iniciar sesión con el usuario creado
-        const result = await login(userData.email, userRole);
-        
-        if (result.success) {
-          // Mostrar mensaje de éxito
-          onApiResponse({
-            message: `¡Integración exitosa! ${title} creado y autenticado`,
-            type: 'success'
-          });
-          
-          // Navegar a la ruta correspondiente
-          navigate(path);
-        } else {
-          throw new Error(result.message);
-        }
-      } else {
-        throw new Error('Error al crear usuario');
+      switch (path) {
+        case '/client':
+          navigate('/mesa-selection', { replace: false });
+          break;
+
+        case '/admin':
+          navigate('/admin-login', { replace: false });
+          break;
+
+        case '/staff':
+          navigate('/staff-login', { replace: false });
+          break;
+
+        default:
+          throw new Error('Ruta no válida');
       }
     } catch (error) {
-      // Mostrar mensaje de error
       onApiResponse({
-        message: `Error en la integración: ${error.message}`,
+        message: `Error en la navegación: ${error.message}`,
         type: 'error'
       });
     }
@@ -81,6 +48,7 @@ function OptionCard({ title, description, buttonText, path, onApiResponse }) {
       </p>
       <button 
         onClick={handleClick} 
+        type="button" // Especificar tipo de botón
         className="bg-white text-dark border-3 border-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base rounded-none font-bold uppercase shadow-brutal self-center w-full sm:w-auto sm:min-w-[200px]
         hover:bg-dark hover:text-white hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-[3px_3px_0_rgba(0,0,0,0.5)]">
         {buttonText}

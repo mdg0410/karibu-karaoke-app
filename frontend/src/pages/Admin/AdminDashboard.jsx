@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 // Importar componentes
@@ -17,11 +16,6 @@ const AdminDashboard = () => {
   const { t } = useTranslation();
   const { currentUser, logout } = useAuth();
   const [seccionActiva, setSeccionActiva] = useState('mesas');
-
-  // Verificar si el usuario está autenticado como admin
-  if (!currentUser || currentUser.role !== 'admin') {
-    return <Navigate to="/" replace />;
-  }
 
   const handleLogout = () => {
     logout();

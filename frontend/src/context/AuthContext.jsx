@@ -10,6 +10,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     // Verificar si hay un usuario autenticado almacenado en localStorage
@@ -21,14 +22,24 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Función para iniciar sesión
-  const login = async (email, role) => {
+  const login = async (email, role, password = null, adminToken = null) => {
     try {
-      const response = await postApi(`auth/login/${role}`, { email });
+      setError('');
+      setLoading(true);
+      
+      const loginData = {
+        email,
+        password,
+        adminToken
+      };
+      
+      const response = await postApi(`auth/login/${role}`, loginData);
       
       if (response.success) {
         const userData = {
           ...response.user,
-          token: response.token
+          token: response.token,
+          role: response.user.role || role
         };
         
         setCurrentUser(userData);
@@ -36,10 +47,13 @@ export const AuthProvider = ({ children }) => {
         return { success: true, data: userData };
       }
       
-      return { success: false, message: 'Error en autenticación' };
+      throw new Error(response.message || 'Error en autenticación');
     } catch (error) {
       console.error('Error en login:', error);
+      setError(error.message || 'Error desconocido en autenticación');
       return { success: false, message: error.message };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,7 +67,8 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     login,
     logout,
-    loading
+    loading,
+    error
   };
 
   return (
