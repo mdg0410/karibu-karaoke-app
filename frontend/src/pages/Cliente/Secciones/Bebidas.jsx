@@ -10,6 +10,8 @@ const Bebidas = () => {
   const [bebidas, setBebidas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('todas');
 
   useEffect(() => {
     const fetchBebidas = async () => {
@@ -22,6 +24,9 @@ const Bebidas = () => {
         if (response.success) {
           console.log(`Se recibieron ${response.data.length} bebidas:`, response.data);
           setBebidas(response.data);
+          // Extract unique categories
+          const uniqueCategories = [...new Set(response.data.map(bebida => bebida.categoria || 'sin-categoria'))];
+          setCategories(uniqueCategories);
         } else {
           console.error('Error en la respuesta:', response);
           setError('Error al cargar las bebidas');
@@ -59,6 +64,11 @@ const Bebidas = () => {
     // Implementar lógica para añadir al carrito
   };
 
+  // Filtrar bebidas por categoría
+  const filteredBebidas = selectedCategory === 'todas' 
+    ? bebidas 
+    : bebidas.filter(bebida => bebida.categoria === selectedCategory);
+
   if (loading) {
     return (
       <div className="bg-dark-card p-6 rounded-lg border border-white/10">
@@ -82,11 +92,36 @@ const Bebidas = () => {
     <div className="bg-dark-card p-6 rounded-lg border border-white/10">
       <h2 className="text-2xl font-bold mb-6 text-white">{t('bebidas')}</h2>
       
-      {bebidas.length === 0 ? (
+      {/* Filtros de categoría */}
+      <div className="mb-6 flex flex-wrap gap-2">
+        <button
+          onClick={() => setSelectedCategory('todas')}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
+            ${selectedCategory === 'todas' 
+              ? 'bg-primary text-white' 
+              : 'bg-dark-light text-white/70 hover:text-white hover:bg-primary/20'}`}
+        >
+          Todas
+        </button>
+        {categories.map(category => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors
+              ${selectedCategory === category 
+                ? 'bg-primary text-white' 
+                : 'bg-dark-light text-white/70 hover:text-white hover:bg-primary/20'}`}
+          >
+            {category}
+          </button>
+        ))}
+      </div>
+      
+      {filteredBebidas.length === 0 ? (
         <p className="text-white/70">{t('noBebidasDisponibles')}</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {bebidas.map((bebida) => (
+          {filteredBebidas.map((bebida) => (
             <div 
               key={bebida._id} 
               className="bg-dark-light rounded-lg overflow-hidden border border-white/5 hover:border-primary/50 transition-all"
