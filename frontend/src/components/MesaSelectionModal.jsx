@@ -1,15 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
-const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
-  const { t } = useTranslation();
+// Custom hook para manejar la selección de mesa
+const useMesaSelection = (onMesaSelected) => {
   const { verificarMesa } = useAuth();
-  const [mesaId, setMesaId] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [mesaId, setMesaId] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +21,6 @@ const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
     setError('');
 
     try {
-      // Verificar si la mesa está disponible usando la función del contexto
       const response = await verificarMesa(mesaId);
       
       if (response.success && response.disponible) {
@@ -38,9 +36,30 @@ const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
     }
   };
 
-  const handleGoToHome = () => {
-    navigate('/');
+  const handleChange = (e) => {
+    setMesaId(e.target.value);
+    setError(''); // Limpiar error al modificar el campo
   };
+
+  return {
+    mesaId,
+    error,
+    loading,
+    handleSubmit,
+    handleChange
+  };
+};
+
+const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const {
+    mesaId,
+    error,
+    loading,
+    handleSubmit,
+    handleChange
+  } = useMesaSelection(onMesaSelected);
 
   if (!isOpen) return null;
 
@@ -60,7 +79,7 @@ const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
               type="text"
               id="mesaId"
               value={mesaId}
-              onChange={(e) => setMesaId(e.target.value)}
+              onChange={handleChange}
               className="w-full p-3 bg-dark border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Ingresa el número de mesa"
               disabled={loading}
@@ -76,7 +95,7 @@ const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
           <div className="flex justify-between pt-2 space-x-3">
             <button
               type="button"
-              onClick={handleGoToHome}
+              onClick={onClose}
               className="flex-1 py-2 px-4 bg-gray-700 text-white rounded-md hover:bg-gray-600 transition-colors"
               disabled={loading}
             >
@@ -87,9 +106,7 @@ const MesaSelectionModal = ({ isOpen, onClose, onMesaSelected }) => {
               className="flex-1 py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors flex items-center justify-center"
               disabled={loading}
             >
-              {loading ? (
-                <span className="animate-spin mr-2">⟳</span>
-              ) : null}
+              {loading && <span className="animate-spin mr-2">⟳</span>}
               Continuar
             </button>
           </div>

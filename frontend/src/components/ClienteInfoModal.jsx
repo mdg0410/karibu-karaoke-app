@@ -1,51 +1,46 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 
-const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
-  const { t } = useTranslation();
+// Custom hook para manejar el formulario
+const useClienteForm = (mesaId, onSubmitSuccess) => {
   const { registrarCliente } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [formData, setFormData] = React.useState({
     nombre: '',
     email: '',
     telefono: ''
   });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const validateForm = () => {
+    if (!formData.nombre.trim() || !formData.email.trim() || !formData.telefono.trim()) {
+      setError('Todos los campos son obligatorios');
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Correo electrónico inválido');
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validación básica
-    if (!formData.nombre.trim() || !formData.email.trim() || !formData.telefono.trim()) {
-      setError('Todos los campos son obligatorios');
-      return;
-    }
-
-    // Validación de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError('Correo electrónico inválido');
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     setError('');
 
     try {
-      // Usar la función del contexto para registrar el cliente
       const response = await registrarCliente(formData, mesaId);
       
       if (response.success) {
-        // Aseguramos que la respuesta tenga el formato correcto para el callback
         const clienteData = response.data || response.cliente;
-        
-        // Llamar al callback con el formato esperado
         onSubmitSuccess({
           cliente: {
             id: clienteData.id,
@@ -55,9 +50,6 @@ const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
           },
           token: response.token
         });
-        
-        // Cerrar el modal explícitamente
-        onClose();
       } else {
         setError(response.message || 'Error al registrar cliente');
       }
@@ -69,6 +61,45 @@ const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
     }
   };
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setError(''); // Limpiar error al modificar campos
+  };
+
+  return {
+    formData,
+    loading,
+    error,
+    handleChange,
+    handleSubmit
+  };
+};
+
+const FormInput = ({ id, label, type = 'text', ...props }) => (
+  <div>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-300 mb-1">
+      {label}
+    </label>
+    <input
+      type={type}
+      id={id}
+      className="w-full p-3 bg-dark border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary"
+      {...props}
+    />
+  </div>
+);
+
+const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
+  const { t } = useTranslation();
+  const {
+    formData,
+    loading,
+    error,
+    handleChange,
+    handleSubmit
+  } = useClienteForm(mesaId, onSubmitSuccess);
+
   if (!isOpen) return null;
 
   return (
@@ -79,53 +110,37 @@ const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
         </h2>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="nombre" className="block text-sm font-medium text-gray-300 mb-1">
-              Nombre
-            </label>
-            <input
-              type="text"
-              id="nombre"
-              name="nombre"
-              value={formData.nombre}
-              onChange={handleChange}
-              className="w-full p-3 bg-dark border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Ingresa tu nombre"
-              disabled={loading}
-            />
-          </div>
+          <FormInput
+            id="nombre"
+            name="nombre"
+            label="Nombre"
+            value={formData.nombre}
+            onChange={handleChange}
+            placeholder="Ingresa tu nombre"
+            disabled={loading}
+          />
           
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full p-3 bg-dark border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Ingresa tu correo electrónico"
-              disabled={loading}
-            />
-          </div>
+          <FormInput
+            id="email"
+            name="email"
+            type="email"
+            label="Email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Ingresa tu correo electrónico"
+            disabled={loading}
+          />
           
-          <div>
-            <label htmlFor="telefono" className="block text-sm font-medium text-gray-300 mb-1">
-              Teléfono
-            </label>
-            <input
-              type="tel"
-              id="telefono"
-              name="telefono"
-              value={formData.telefono}
-              onChange={handleChange}
-              className="w-full p-3 bg-dark border border-gray-700 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Ingresa tu número de teléfono"
-              disabled={loading}
-            />
-          </div>
+          <FormInput
+            id="telefono"
+            name="telefono"
+            type="tel"
+            label="Teléfono"
+            value={formData.telefono}
+            onChange={handleChange}
+            placeholder="Ingresa tu número de teléfono"
+            disabled={loading}
+          />
           
           {error && (
             <div className="bg-red-900/40 border border-red-800 text-red-300 p-3 rounded">
@@ -147,9 +162,7 @@ const ClienteInfoModal = ({ isOpen, onClose, onSubmitSuccess, mesaId }) => {
               className="flex-1 py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors flex items-center justify-center"
               disabled={loading}
             >
-              {loading ? (
-                <span className="animate-spin mr-2">⟳</span>
-              ) : null}
+              {loading && <span className="animate-spin mr-2">⟳</span>}
               Registrar
             </button>
           </div>
