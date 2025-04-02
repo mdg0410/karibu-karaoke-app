@@ -18,7 +18,11 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const USE_HTTPS = process.env.USE_HTTPS !== 'false'; // Por defecto usar HTTPS a menos que se especifique lo contrario
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

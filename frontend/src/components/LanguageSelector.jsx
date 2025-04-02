@@ -9,7 +9,7 @@ function LanguageSelector() {
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center space-x-2 w-full md:w-auto justify-center">
       <button 
         onClick={() => changeLanguage('en')} 
         className={`px-2 py-1 text-xs ${i18n.language === 'en' ? 'bg-white text-dark font-bold' : 'bg-transparent text-white/70 hover:text-white'}`}

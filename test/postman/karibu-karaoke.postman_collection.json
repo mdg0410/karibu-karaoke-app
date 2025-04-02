@@ -1,0 +1,271 @@
+{
+  "info": {
+    "_postman_id": "7c5e2a6d-fe1c-4b5c-a78c-1e4e62e0a8c3",
+    "name": "Karibu Karaoke API",
+    "description": "Colección para probar las APIs de Karibu Karaoke",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "API Root",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api",
+          "host": ["{{baseUrl}}"],
+          "path": ["api"]
+        },
+        "description": "Verificar que la API está funcionando"
+      },
+      "response": []
+    },
+    {
+      "name": "Cliente",
+      "item": [
+        {
+          "name": "Crear Cliente",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/cliente",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cliente"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Cliente Test\",\n    \"email\": \"cliente{{$timestamp}}@test.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear un nuevo cliente"
+          },
+          "response": []
+        },
+        {
+          "name": "Generar Token Cliente",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/cliente/{{clienteId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cliente", "{{clienteId}}"]
+            },
+            "description": "Generar token JWT para un cliente existente"
+          },
+          "response": []
+        }
+      ],
+      "description": "Operaciones relacionadas con clientes"
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Crear Admin",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Admin Test\",\n    \"email\": \"admin{{$timestamp}}@test.com\",\n    \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear un nuevo administrador"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Admin por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/{{adminId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "{{adminId}}"]
+            },
+            "description": "Obtener información de un administrador por su ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "Operaciones relacionadas con administradores"
+    },
+    {
+      "name": "Staff",
+      "item": [
+        {
+          "name": "Crear Staff",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staff"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Staff Test\",\n    \"email\": \"staff{{$timestamp}}@test.com\",\n    \"password\": \"staff123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Crear un nuevo miembro del personal"
+          },
+          "response": []
+        },
+        {
+          "name": "Obtener Staff por ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staff", "{{staffId}}"]
+            },
+            "description": "Obtener información de un miembro del personal por su ID"
+          },
+          "response": []
+        }
+      ],
+      "description": "Operaciones relacionadas con el personal"
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login Cliente",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login/cliente",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login", "cliente"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{clienteEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Iniciar sesión como cliente"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login/admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login", "admin"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{adminEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Iniciar sesión como administrador"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Staff",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login", "staff"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{staffEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Iniciar sesión como miembro del personal"
+          },
+          "response": []
+        }
+      ],
+      "description": "Operaciones relacionadas con autenticación"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "clienteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staffId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clienteEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminEmail",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "staffEmail",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
