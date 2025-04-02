@@ -4,6 +4,7 @@ import adminRoutes from './adminRoutes';
 import staffRoutes from './staffRoutes';
 import authRoutes from './authRoutes';
 import mesasRoutes from './mesasRoutes';
+import productoRoutes from './productoRoutes';
 
 const router = express.Router();
 
@@ -13,6 +14,7 @@ router.use('/admin', adminRoutes);
 router.use('/staff', staffRoutes);
 router.use('/auth', authRoutes);
 router.use('/mesas', mesasRoutes);
+router.use('/productos', productoRoutes);
 
 // Ruta de prueba para la API
 router.get('/', (req, res) => {
