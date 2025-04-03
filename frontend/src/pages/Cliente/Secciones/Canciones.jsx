@@ -12,21 +12,16 @@ const Canciones = () => {
   const [songNumbers, setSongNumbers] = useState(['', '', '']);
 
   const getMesaId = () => {
-    // Intentar obtener el ID de la mesa directamente
     const mesaId = localStorage.getItem('mesaObjectId');
-    console.log('Mesa ID from localStorage:', mesaId);
     
     if (!mesaId) {
-      console.log('No mesa ID found in localStorage');
-      // Intentar obtener la mesa del currentUser como fallback
       if (currentUser?.mesa?._id) {
-        console.log('Using mesa from currentUser:', currentUser.mesa);
         return currentUser.mesa._id;
       }
       return null;
     }
 
-    return mesaId; // El ID ya está en el formato correcto
+    return mesaId;
   };
 
   const handleSongNumberChange = (index, value) => {
@@ -42,19 +37,14 @@ const Canciones = () => {
     setSuccess(false);
 
     try {
-      // Obtener y verificar la mesa primero
       const mesaId = getMesaId();
-      console.log('Mesa ID obtenido:', mesaId);
 
       if (!mesaId) {
-        console.log('Current User:', currentUser);
-        console.log('LocalStorage items:', Object.keys(localStorage));
         setError('No se encontró la información de la mesa. Por favor, selecciona una mesa primero.');
         setLoading(false);
         return;
       }
 
-      // Validar que al menos una canción sea ingresada y que sean números válidos
       const validSongs = songNumbers
         .filter(num => num.trim() !== '')
         .map(num => {
@@ -76,23 +66,27 @@ const Canciones = () => {
       }
 
       const requestData = {
-        mesaId: mesaId, // Usando el ObjectId de la mesa desde localStorage
+        mesaId: mesaId,
         canciones: validSongs
       };
 
-      console.log('Enviando solicitud:', requestData);
+      console.info('[Pedido Canciones] Enviando solicitud para mesa:', mesaId);
       
       const response = await postApi('pedido-canciones', requestData);
 
       if (response.success) {
+        console.info('[Pedido Canciones] Solicitud exitosa:', {
+          mesaId: mesaId,
+          cancionesSolicitadas: validSongs.length
+        });
         setSuccess(true);
         setSongNumbers(['', '', '']);
-        console.log('Pedido creado exitosamente:', response.data);
       } else {
+        console.warn('[Pedido Canciones] Error en la solicitud:', response.message);
         setError(response.message || 'Error al enviar la solicitud');
       }
     } catch (error) {
-      console.error('Error al enviar solicitud:', error);
+      console.error('[Pedido Canciones] Error:', error.message);
       setError(error.message || 'Error al enviar la solicitud');
     } finally {
       setLoading(false);
