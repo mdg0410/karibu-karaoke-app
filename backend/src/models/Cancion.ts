@@ -10,6 +10,8 @@ export interface ICancion extends Document {
   estado: 'activa' | 'inactiva';
   popularidad: number;
   fechaAgregada: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const CancionSchema = new Schema(
