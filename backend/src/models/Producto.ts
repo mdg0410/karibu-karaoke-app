@@ -5,7 +5,6 @@ export interface IProducto extends Document {
   categoria: string;
   precio: number;
   imagenURL: string;
-  cantidad: number;
   estado: 'disponible' | 'agotado' | 'oculto';
   createdAt: Date;
   updatedAt: Date;
@@ -32,11 +31,6 @@ const ProductoSchema: Schema = new Schema(
       type: String,
       default: 'default-producto.jpg'
     },
-    cantidad: {
-      type: Number,
-      default: 0,
-      min: [0, 'La cantidad no puede ser negativa']
-    },
     estado: {
       type: String,
       enum: ['disponible', 'agotado', 'oculto'],
@@ -44,9 +38,12 @@ const ProductoSchema: Schema = new Schema(
     }
   },
   {
-    timestamps: true,
-    collection: 'products'
+    timestamps: true
   }
 );
 
-export default mongoose.model<IProducto>('Product', ProductoSchema); 
+// Índices para mejorar las búsquedas
+ProductoSchema.index({ categoria: 1 });
+ProductoSchema.index({ estado: 1 });
+
+export default mongoose.model<IProducto>('Producto', ProductoSchema); 
