@@ -2,12 +2,21 @@
  * Servicio para manejar las solicitudes a la API
  */
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Obtener el token de autenticación del localStorage
 const getAuthToken = () => {
   const user = localStorage.getItem('user');
-  return user ? JSON.parse(user).token : null;
+  if (!user) {
+    console.warn('No se encontró usuario en localStorage');
+    return null;
+  }
+  const parsedUser = JSON.parse(user);
+  if (!parsedUser.token) {
+    console.warn('Usuario encontrado pero no tiene token:', parsedUser);
+    return null;
+  }
+  return parsedUser.token;
 };
 
 // Configurar headers comunes para todas las peticiones
@@ -20,6 +29,9 @@ const getHeaders = () => {
   const token = getAuthToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+    console.log('Headers de autenticación:', headers);
+  } else {
+    console.warn('No se pudo agregar el token de autorización');
   }
   
   return headers;
