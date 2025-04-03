@@ -1,26 +1,47 @@
 import express from 'express';
-import { verifyToken, verifyRole } from '../middleware/auth';
-import {
-  getCanciones,
-  getCancion,
-  createCancion,
-  updateCancion,
-  deleteCancion,
-  getGeneros,
-  getIdiomas
-} from '../controllers/cancionesController';
+import * as cancionesController from '../controllers/cancionesController';
+import { validateCreateCancion, validateUpdateCancion, validateCancionFilters } from '../middleware/validation/cancionValidation';
+import { verificarPermisosCancion, verificarCancionExiste, verificarEstadoCancion } from '../middleware/auth/cancionAuth';
+import { verificarToken } from '../middleware/auth/userAuth';
 
 const router = express.Router();
 
-// Rutas públicas
-router.get('/', getCanciones);
-router.get('/generos', getGeneros);
-router.get('/idiomas', getIdiomas);
-router.get('/:id', getCancion);
+// Middleware para verificar el token en todas las rutas
+router.use(verificarToken);
 
-// Rutas protegidas (requieren autenticación y rol de admin o staff)
-router.post('/', [verifyToken, verifyRole(['admin', 'staff'])], createCancion);
-router.put('/:id', [verifyToken, verifyRole(['admin', 'staff'])], updateCancion);
-router.delete('/:id', [verifyToken, verifyRole(['admin'])], deleteCancion);
+// Rutas públicas (accesibles para todos los roles autenticados)
+router.get('/populares', cancionesController.getCancionesPopulares);
+router.get('/generos', cancionesController.getGeneros);
+router.get('/idiomas', cancionesController.getIdiomas);
+router.get('/:id', verificarCancionExiste, cancionesController.getCancionById);
+router.get('/', validateCancionFilters, cancionesController.getCanciones);
+
+// Rutas para operaciones básicas (requieren rol admin o trabajador)
+router.post('/', 
+  verificarPermisosCancion(['admin']), 
+  validateCreateCancion, 
+  cancionesController.createCancion
+);
+
+router.put('/:id', 
+  verificarPermisosCancion(['admin']), 
+  verificarCancionExiste,
+  validateUpdateCancion, 
+  cancionesController.updateCancion
+);
+
+router.delete('/:id', 
+  verificarPermisosCancion(['admin']), 
+  verificarCancionExiste, 
+  cancionesController.deleteCancion
+);
+
+// Ruta para incrementar popularidad
+router.put('/:id/popularidad', 
+  verificarPermisosCancion(['admin', 'trabajador']),
+  verificarCancionExiste,
+  verificarEstadoCancion(['activa']),
+  cancionesController.incrementarPopularidadCancion
+);
 
 export default router; 

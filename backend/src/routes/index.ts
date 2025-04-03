@@ -1,24 +1,22 @@
 import express from 'express';
-import clienteRoutes from './clienteRoutes';
-import adminRoutes from './adminRoutes';
-import staffRoutes from './staffRoutes';
-import authRoutes from './authRoutes';
+import userRoutes from './userRoutes';
 import mesasRoutes from './mesasRoutes';
 import productoRoutes from './productoRoutes';
 import cancionesRoutes from './cancionesRoutes';
-import pedidoCancionesRoutes from './pedidoCancionesRoutes';
+import pedidoRoutes from './pedidoRoutes';
+import listaCancionesRoutes from './listaCancionesRoutes';
+import historialCierreRoutes from './historialCierreRoutes';
 
 const router = express.Router();
 
 // Rutas principales
-router.use('/clientes', clienteRoutes);
-router.use('/admin', adminRoutes);
-router.use('/staff', staffRoutes);
-router.use('/auth', authRoutes);
+router.use('/usuarios', userRoutes); // Incluye autenticación
 router.use('/mesas', mesasRoutes);
 router.use('/productos', productoRoutes);
 router.use('/canciones', cancionesRoutes);
-router.use('/pedido-canciones', pedidoCancionesRoutes);
+router.use('/pedidos', pedidoRoutes);
+router.use('/lista-canciones', listaCancionesRoutes);
+router.use('/historial-cierre', historialCierreRoutes);
 
 // Ruta de prueba para la API
 router.get('/', (req, res) => {

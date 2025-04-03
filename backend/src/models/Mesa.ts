@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface IHistorialMesa {
+export interface IHistorialMesa {
   usuarioId: mongoose.Types.ObjectId;
   fechaInicio: Date;
-  fechaFin: Date;
+  fechaFin?: Date;
   estado: string;
 }
 

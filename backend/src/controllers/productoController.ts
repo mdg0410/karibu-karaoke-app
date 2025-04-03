@@ -1,6 +1,27 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Producto, { IProducto } from '../models/Producto';
+import { 
+  formatProductoResponse,
+  buildProductoFilterQuery,
+  createPaginatedProductoResponse,
+  actualizarEstadoSegunStock
+} from '../utils/productoUtils';
+import { 
+  IProductoCreate, 
+  IProductoUpdate, 
+  ICambioEstadoProducto,
+  IProductoFilters,
+  IProductoPaginationOptions
+} from '../types/producto';
+
+// Interfaz para Request con user autenticado
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    rol: string;
+  };
+}
 
 /**
  * Obtener todos los productos
@@ -9,28 +30,46 @@ import Producto, { IProducto } from '../models/Producto';
  */
 export const getProductos = async (req: Request, res: Response) => {
   try {
-    console.log('Solicitando todos los productos');
+    // Extraer parámetros de paginación y ordenamiento
+    const { 
+      page = 1, 
+      limit = 10, 
+      sortBy = 'nombre', 
+      order = 'asc' 
+    } = req.query as unknown as IProductoPaginationOptions;
+
+    // Extraer filtros
+    const filters: IProductoFilters = {
+      nombre: req.query.nombre as string,
+      categoria: req.query.categoria as string,
+      estado: req.query.estado as any,
+      precioMin: req.query.precioMin ? Number(req.query.precioMin) : undefined,
+      precioMax: req.query.precioMax ? Number(req.query.precioMax) : undefined,
+      stockMin: req.query.stockMin ? Number(req.query.stockMin) : undefined,
+      stockMax: req.query.stockMax ? Number(req.query.stockMax) : undefined
+    };
+
+    // Construir la consulta con los filtros
+    const query = buildProductoFilterQuery(filters);
+
+    // Contar el total de documentos que coinciden con los filtros
+    const total = await Producto.countDocuments(query);
+
+    // Obtener los productos paginados
+    const productos = await Producto.find(query)
+      .sort({ [sortBy]: order === 'asc' ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Crear respuesta paginada
+    const response = createPaginatedProductoResponse(productos, page, limit, total);
     
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    const productos = await productosCollection.find({}).toArray();
-    
-    console.log(`Se encontraron ${productos.length} productos directamente de la colección`);
-    if (productos.length > 0) {
-      console.log('Muestra del primer producto:', JSON.stringify(productos[0], null, 2));
-    }
-    
-    res.status(200).json({ 
-      success: true,
-      count: productos.length,
-      data: productos
-    });
+    return res.status(200).json(response);
   } catch (error) {
     console.error('Error al obtener productos:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al obtener productos',
-      error: (error as Error).message
+    return res.status(500).json({ 
+      message: 'Error al obtener los productos',
+      error: (error as Error).message 
     });
   }
 };
@@ -43,66 +82,50 @@ export const getProductos = async (req: Request, res: Response) => {
 export const getProductosPorCategoria = async (req: Request, res: Response) => {
   try {
     const { categoria } = req.params;
-    console.log(`Solicitando productos de categoría: ${categoria}`);
     
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    let query = {};
+    // Extraer parámetros de paginación y ordenamiento
+    const { 
+      page = 1, 
+      limit = 10, 
+      sortBy = 'nombre', 
+      order = 'asc' 
+    } = req.query as unknown as IProductoPaginationOptions;
+
+    let query: mongoose.FilterQuery<IProducto> = {};
     
     if (categoria === 'bebidas') {
-      // Obtener todos los productos que NO son de categoría comida (case insensitive)
-      console.log('Buscando productos que NO son de categoría comida');
+      // Obtener todos los productos que NO son de categoría comida
       query = { 
-        categoria: { 
-          $not: { 
-            $regex: /^comida$/i // Expresión regular para "comida" case insensitive
-          } 
-        } 
+        categoria: { $ne: 'comida' } 
       };
     } else if (categoria === 'comida') {
-      // Obtener productos de categoría comida (case insensitive)
-      console.log('Buscando productos de categoría comida');
-      query = { 
-        categoria: { 
-          $regex: /^comida$/i // Expresión regular para "comida" case insensitive
-        } 
-      };
+      // Obtener productos de categoría comida
+      query = { categoria: 'comida' };
     } else {
       // Si se especifica otra categoría, buscar por esa categoría (case insensitive)
-      console.log(`Buscando productos de categoría específica: ${categoria}`);
       query = { 
-        categoria: { 
-          $regex: new RegExp(`^${categoria}$`, 'i') 
-        } 
+        categoria: { $regex: categoria, $options: 'i' } 
       };
     }
+
+    // Contar el total de documentos que coinciden con los filtros
+    const total = await Producto.countDocuments(query);
+
+    // Obtener los productos paginados
+    const productos = await Producto.find(query)
+      .sort({ [sortBy]: order === 'asc' ? 1 : -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Crear respuesta paginada
+    const response = createPaginatedProductoResponse(productos, page, limit, total);
     
-    // Log de la consulta que se realizará
-    console.log('Query a ejecutar:', JSON.stringify(query));
-    
-    const productos = await productosCollection.find(query).toArray();
-    
-    console.log(`Se encontraron ${productos.length} productos para la categoría ${categoria}`);
-    if (productos.length > 0) {
-      console.log('Muestra del primer producto:', JSON.stringify(productos[0], null, 2));
-    } else {
-      // Log adicional para diagnóstico
-      console.log('No se encontraron productos. Verificando categorías disponibles...');
-      const todasCategorias = await productosCollection.distinct('categoria');
-      console.log('Categorías disponibles en la BD:', todasCategorias);
-    }
-    
-    res.status(200).json({ 
-      success: true,
-      count: productos.length,
-      data: productos
-    });
+    return res.status(200).json(response);
   } catch (error) {
     console.error(`Error al obtener productos de categoría ${req.params.categoria}:`, error);
-    res.status(500).json({
-      success: false,
+    return res.status(500).json({ 
       message: `Error al obtener productos de categoría ${req.params.categoria}`,
-      error: (error as Error).message
+      error: (error as Error).message 
     });
   }
 };
@@ -115,272 +138,26 @@ export const getProductosPorCategoria = async (req: Request, res: Response) => {
 export const getProductoById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    console.log(`Solicitando producto con ID: ${id}`);
     
     // Verificar si el ID es válido
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`ID no válido: ${id}`);
-      return res.status(400).json({
-        success: false,
-        message: 'ID de producto no válido'
-      });
+      return res.status(400).json({ message: 'ID de producto no válido' });
     }
     
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    const producto = await productosCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
+    const producto = await Producto.findById(id);
     
     if (!producto) {
-      console.log(`Producto con ID ${id} no encontrado`);
-      return res.status(404).json({
-        success: false,
-        message: 'Producto no encontrado'
-      });
+      return res.status(404).json({ message: 'Producto no encontrado' });
     }
     
-    console.log(`Producto encontrado:`, JSON.stringify(producto, null, 2));
-    
-    res.status(200).json({ 
-      success: true,
-      data: producto
+    return res.status(200).json({
+      producto: formatProductoResponse(producto)
     });
   } catch (error) {
     console.error('Error al obtener producto por ID:', error);
-    res.status(500).json({
-      success: false,
+    return res.status(500).json({ 
       message: 'Error al obtener producto',
-      error: (error as Error).message
-    });
-  }
-};
-
-/**
- * Crear un nuevo producto
- * @route POST /api/productos
- * @access Privado (solo admin)
- */
-export const createProducto = async (req: Request, res: Response) => {
-  try {
-    console.log('Creando nuevo producto:', req.body);
-    
-    // Verificar campos requeridos
-    const { nombre, categoria, precio } = req.body;
-    if (!nombre || !categoria || precio === undefined) {
-      return res.status(400).json({
-        success: false,
-        message: 'Faltan campos requeridos: nombre, categoria y precio son obligatorios'
-      });
-    }
-    
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    
-    // Insertar el documento
-    const resultado = await productosCollection.insertOne({
-      ...req.body,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-    
-    // Obtener el documento insertado
-    const nuevoProducto = await productosCollection.findOne({ _id: resultado.insertedId });
-    
-    console.log(`Producto creado con ID: ${resultado.insertedId}`);
-    
-    res.status(201).json({ 
-      success: true,
-      message: 'Producto creado correctamente',
-      data: nuevoProducto
-    });
-  } catch (error) {
-    console.error('Error al crear producto:', error);
-    res.status(400).json({
-      success: false,
-      message: 'Error al crear producto',
-      error: (error as Error).message
-    });
-  }
-};
-
-/**
- * Actualizar un producto
- * @route PUT /api/productos/:id
- * @access Privado (solo admin)
- */
-export const updateProducto = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    console.log(`Actualizando producto con ID: ${id}`, req.body);
-    
-    // Verificar si el ID es válido
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`ID no válido: ${id}`);
-      return res.status(400).json({
-        success: false,
-        message: 'ID de producto no válido'
-      });
-    }
-    
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    
-    // Actualizar el documento
-    const resultado = await productosCollection.updateOne(
-      { _id: new mongoose.Types.ObjectId(id) },
-      { 
-        $set: { 
-          ...req.body,
-          updatedAt: new Date()
-        } 
-      }
-    );
-    
-    if (resultado.matchedCount === 0) {
-      console.log(`Producto con ID ${id} no encontrado para actualizar`);
-      return res.status(404).json({
-        success: false,
-        message: 'Producto no encontrado'
-      });
-    }
-    
-    // Obtener el documento actualizado
-    const productoActualizado = await productosCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
-    
-    console.log(`Producto actualizado:`, JSON.stringify(productoActualizado, null, 2));
-    
-    res.status(200).json({ 
-      success: true,
-      message: 'Producto actualizado correctamente',
-      data: productoActualizado
-    });
-  } catch (error) {
-    console.error('Error al actualizar producto:', error);
-    res.status(400).json({
-      success: false,
-      message: 'Error al actualizar producto',
-      error: (error as Error).message
-    });
-  }
-};
-
-/**
- * Eliminar un producto
- * @route DELETE /api/productos/:id
- * @access Privado (solo admin)
- */
-export const deleteProducto = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    console.log(`Eliminando producto con ID: ${id}`);
-    
-    // Verificar si el ID es válido
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`ID no válido: ${id}`);
-      return res.status(400).json({
-        success: false,
-        message: 'ID de producto no válido'
-      });
-    }
-    
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    
-    // Buscar el producto antes de eliminarlo
-    const producto = await productosCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
-    
-    if (!producto) {
-      console.log(`Producto con ID ${id} no encontrado para eliminar`);
-      return res.status(404).json({
-        success: false,
-        message: 'Producto no encontrado'
-      });
-    }
-    
-    // Eliminar el documento
-    await productosCollection.deleteOne({ _id: new mongoose.Types.ObjectId(id) });
-    
-    console.log(`Producto eliminado:`, JSON.stringify(producto, null, 2));
-    
-    res.status(200).json({ 
-      success: true,
-      message: 'Producto eliminado correctamente'
-    });
-  } catch (error) {
-    console.error('Error al eliminar producto:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al eliminar producto',
-      error: (error as Error).message
-    });
-  }
-};
-
-/**
- * Cambiar el estado de un producto
- * @route PATCH /api/productos/:id/estado
- * @access Privado (solo admin)
- */
-export const cambiarEstadoProducto = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { estado } = req.body;
-    console.log(`Cambiando estado del producto con ID: ${id} a ${estado}`);
-    
-    // Verificar si el ID es válido
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log(`ID no válido: ${id}`);
-      return res.status(400).json({
-        success: false,
-        message: 'ID de producto no válido'
-      });
-    }
-    
-    if (!estado || !['disponible', 'agotado', 'oculto'].includes(estado)) {
-      console.log(`Estado inválido: ${estado}`);
-      return res.status(400).json({
-        success: false,
-        message: 'Estado no válido'
-      });
-    }
-    
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    
-    // Actualizar el documento
-    const resultado = await productosCollection.updateOne(
-      { _id: new mongoose.Types.ObjectId(id) },
-      { 
-        $set: { 
-          estado,
-          updatedAt: new Date()
-        } 
-      }
-    );
-    
-    if (resultado.matchedCount === 0) {
-      console.log(`Producto con ID ${id} no encontrado para cambiar estado`);
-      return res.status(404).json({
-        success: false,
-        message: 'Producto no encontrado'
-      });
-    }
-    
-    // Obtener el documento actualizado
-    const producto = await productosCollection.findOne({ _id: new mongoose.Types.ObjectId(id) });
-    
-    console.log(`Estado del producto actualizado:`, JSON.stringify(producto, null, 2));
-    
-    res.status(200).json({ 
-      success: true,
-      message: `Producto marcado como ${estado}`,
-      data: producto
-    });
-  } catch (error) {
-    console.error('Error al cambiar estado del producto:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error al cambiar estado del producto',
-      error: (error as Error).message
+      error: (error as Error).message 
     });
   }
 };
@@ -392,27 +169,169 @@ export const cambiarEstadoProducto = async (req: Request, res: Response) => {
  */
 export const getCategorias = async (req: Request, res: Response) => {
   try {
-    console.log('Solicitando todas las categorías disponibles');
+    const categorias = await Producto.distinct('categoria');
     
-    // Obtener referencia directa a la colección
-    const productosCollection = mongoose.connection.collection('products');
-    
-    // Obtener categorías únicas
-    const categorias = await productosCollection.distinct('categoria');
-    
-    console.log(`Se encontraron ${categorias.length} categorías distintas:`, categorias);
-    
-    res.status(200).json({ 
-      success: true,
-      count: categorias.length,
-      data: categorias
+    return res.status(200).json({
+      categorias
     });
   } catch (error) {
     console.error('Error al obtener categorías:', error);
-    res.status(500).json({
-      success: false,
+    return res.status(500).json({ 
       message: 'Error al obtener categorías',
-      error: (error as Error).message
+      error: (error as Error).message 
+    });
+  }
+};
+
+/**
+ * Crear un nuevo producto
+ * @route POST /api/productos
+ * @access Privado (solo admin)
+ */
+export const createProducto = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const datosProducto = req.body as IProductoCreate;
+    
+    // Crear nuevo producto
+    const nuevoProducto = new Producto({
+      nombre: datosProducto.nombre,
+      categoria: datosProducto.categoria,
+      precio: datosProducto.precio,
+      imagenURL: datosProducto.imagenURL || 'default-producto.jpg',
+      stock: datosProducto.stock || 0,
+      estado: datosProducto.estado || 'disponible'
+    });
+    
+    // Actualizar estado según stock
+    actualizarEstadoSegunStock(nuevoProducto);
+    
+    await nuevoProducto.save();
+    
+    return res.status(201).json({
+      message: 'Producto creado exitosamente',
+      producto: formatProductoResponse(nuevoProducto)
+    });
+  } catch (error) {
+    console.error('Error al crear producto:', error);
+    return res.status(400).json({ 
+      message: 'Error al crear producto',
+      error: (error as Error).message 
+    });
+  }
+};
+
+/**
+ * Actualizar un producto
+ * @route PUT /api/productos/:id
+ * @access Privado (solo admin)
+ */
+export const updateProducto = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const datosActualizacion = req.body as IProductoUpdate;
+    
+    // Verificar si el ID es válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID de producto no válido' });
+    }
+    
+    const producto = await Producto.findById(id);
+    if (!producto) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+    
+    // Actualizar campos
+    if (datosActualizacion.nombre) producto.nombre = datosActualizacion.nombre;
+    if (datosActualizacion.categoria) producto.categoria = datosActualizacion.categoria;
+    if (datosActualizacion.precio !== undefined) producto.precio = datosActualizacion.precio;
+    if (datosActualizacion.imagenURL) producto.imagenURL = datosActualizacion.imagenURL;
+    if (datosActualizacion.stock !== undefined) producto.stock = datosActualizacion.stock;
+    if (datosActualizacion.estado) producto.estado = datosActualizacion.estado;
+    
+    // Actualizar estado según stock si no se especificó estado
+    if (datosActualizacion.stock !== undefined && !datosActualizacion.estado) {
+      actualizarEstadoSegunStock(producto);
+    }
+    
+    await producto.save();
+    
+    return res.status(200).json({
+      message: 'Producto actualizado exitosamente',
+      producto: formatProductoResponse(producto)
+    });
+  } catch (error) {
+    console.error('Error al actualizar producto:', error);
+    return res.status(400).json({ 
+      message: 'Error al actualizar producto',
+      error: (error as Error).message 
+    });
+  }
+};
+
+/**
+ * Cambiar el estado de un producto
+ * @route PATCH /api/productos/:id/estado
+ * @access Privado (solo admin)
+ */
+export const cambiarEstadoProducto = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { estado } = req.body as ICambioEstadoProducto;
+    
+    // Verificar si el ID es válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID de producto no válido' });
+    }
+    
+    const producto = await Producto.findById(id);
+    if (!producto) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+    
+    producto.estado = estado;
+    await producto.save();
+    
+    return res.status(200).json({
+      message: 'Estado del producto actualizado exitosamente',
+      producto: formatProductoResponse(producto)
+    });
+  } catch (error) {
+    console.error('Error al cambiar estado del producto:', error);
+    return res.status(400).json({ 
+      message: 'Error al cambiar estado del producto',
+      error: (error as Error).message 
+    });
+  }
+};
+
+/**
+ * Eliminar un producto
+ * @route DELETE /api/productos/:id
+ * @access Privado (solo admin)
+ */
+export const deleteProducto = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar si el ID es válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'ID de producto no válido' });
+    }
+    
+    const producto = await Producto.findByIdAndDelete(id);
+    
+    if (!producto) {
+      return res.status(404).json({ message: 'Producto no encontrado' });
+    }
+    
+    return res.status(200).json({
+      message: 'Producto eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error al eliminar producto:', error);
+    return res.status(500).json({ 
+      message: 'Error al eliminar producto',
+      error: (error as Error).message 
     });
   }
 }; 
