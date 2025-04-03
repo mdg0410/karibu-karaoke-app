@@ -7,12 +7,12 @@ const router = express.Router();
 // Ruta para verificar si una mesa está disponible por número de mesa (GET)
 router.get('/verificar/:numeromesa', async (req: Request, res: Response) => {
   try {
-    const { numeromesa } = req.params;
+    const numeromesa = parseInt(req.params.numeromesa);
     
-    if (!numeromesa) {
+    if (isNaN(numeromesa)) {
       return res.status(400).json({
         success: false,
-        message: 'El número de mesa es requerido'
+        message: 'El número de mesa debe ser un número válido'
       });
     }
     
@@ -35,6 +35,7 @@ router.get('/verificar/:numeromesa', async (req: Request, res: Response) => {
       disponible,
       message: disponible ? 'Mesa disponible' : 'Mesa no disponible',
       mesa: {
+        _id: mesa._id, // ObjectId de la mesa
         numero: mesa.numero,
         nombre: mesa.nombre,
         capacidad: mesa.capacidad,
@@ -53,12 +54,12 @@ router.get('/verificar/:numeromesa', async (req: Request, res: Response) => {
 // Mantener la ruta POST para compatibilidad con el frontend existente
 router.post('/verificar', async (req: Request, res: Response) => {
   try {
-    const { mesaId } = req.body;
+    const mesaId = parseInt(req.body.mesaId);
     
-    if (!mesaId) {
+    if (isNaN(mesaId)) {
       return res.status(400).json({
         success: false,
-        message: 'El ID de mesa es requerido'
+        message: 'El número de mesa debe ser un número válido'
       });
     }
     
@@ -81,6 +82,7 @@ router.post('/verificar', async (req: Request, res: Response) => {
       disponible,
       message: disponible ? 'Mesa disponible' : 'Mesa no disponible',
       mesa: {
+        _id: mesa._id, // ObjectId de la mesa
         numero: mesa.numero,
         nombre: mesa.nombre,
         capacidad: mesa.capacidad,

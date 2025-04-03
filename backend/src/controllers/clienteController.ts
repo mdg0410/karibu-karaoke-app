@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import Cliente from '../models/Cliente';
 import Mesa from '../models/Mesa';
 import { generateToken } from '../utils/jwt';
+import mongoose from 'mongoose';
 
 // Generar JWT para un cliente específico por ID
 export const generateClienteToken = async (req: Request, res: Response): Promise<void> => {
@@ -53,9 +54,18 @@ export const registrarCliente = async (req: Request, res: Response): Promise<voi
       });
       return;
     }
+
+    // Verificar que el mesaId sea un ObjectId válido
+    if (!mongoose.Types.ObjectId.isValid(mesaId)) {
+      res.status(400).json({ 
+        success: false, 
+        message: 'ID de mesa no válido' 
+      });
+      return;
+    }
     
-    // Verificar que la mesa existe y está disponible
-    const mesa = await Mesa.findOne({ numero: mesaId });
+    // Verificar que la mesa existe y está disponible usando findById
+    const mesa = await Mesa.findById(mesaId);
     if (!mesa) {
       res.status(404).json({ 
         success: false, 
@@ -77,7 +87,7 @@ export const registrarCliente = async (req: Request, res: Response): Promise<voi
       nombre,
       email,
       telefono,
-      mesaId,
+      mesaId, // Usar el ObjectId directamente
       estado: 'activo',
       pedidos: [],
       canciones: []
@@ -88,7 +98,7 @@ export const registrarCliente = async (req: Request, res: Response): Promise<voi
       id: cliente._id.toString(),
       nombre: cliente.nombre,
       email: cliente.email,
-      mesaId
+      mesaId // Usar el ObjectId directamente
     });
     
     // Guardar el token en el cliente
@@ -109,7 +119,8 @@ export const registrarCliente = async (req: Request, res: Response): Promise<voi
         nombre: cliente.nombre,
         email: cliente.email,
         telefono: cliente.telefono,
-        mesaId: cliente.mesaId
+        mesaId: cliente.mesaId,
+        mesaNumero: mesa.numero // Incluir también el número de mesa en la respuesta
       }
     });
   } catch (error) {
