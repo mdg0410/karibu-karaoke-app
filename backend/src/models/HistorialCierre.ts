@@ -61,12 +61,12 @@ const historialCierreSchema = new Schema<IHistorialCierre>(
     },
     usuarioApertura: {
       type: Schema.Types.ObjectId,
-      ref: 'Usuario',
+      ref: 'User', // Changed from 'Usuario' to 'User'
       required: [true, 'El usuario de apertura es requerido']
     },
     usuarioCierre: {
       type: Schema.Types.ObjectId,
-      ref: 'Usuario'
+      ref: 'User' // Changed from 'Usuario' to 'User'
     },
     fechaApertura: {
       type: Date,
@@ -104,4 +104,4 @@ historialCierreSchema.pre('save', function(next) {
   next();
 });
 
-export default mongoose.model<IHistorialCierre>('HistorialCierre', historialCierreSchema); 
+export default mongoose.model<IHistorialCierre>('HistorialCierre', historialCierreSchema);

@@ -52,7 +52,7 @@ export const getHistorialesCierre = async (req: AuthenticatedRequest, res: Respo
       .skip((page - 1) * limit)
       .limit(limit)
       .populate('usuarioApertura', 'nombre')
-      .populate('usuarioCierre', 'nombre');
+      .populate('usuarioCierre', 'nombre'); // Ensure correct population with 'User' model
     
     return res.status(200).json({
       success: true,
@@ -87,7 +87,7 @@ export const getHistorialCierreById = async (req: AuthenticatedRequest, res: Res
     const historial = req.historialCierre;
     
     await historial?.populate('usuarioApertura', 'nombre');
-    await historial?.populate('usuarioCierre', 'nombre');
+    await historial?.populate('usuarioCierre', 'nombre'); // Ensure correct population with 'User' model
     
     return res.status(200).json({
       success: true,
@@ -112,7 +112,7 @@ export const getHistorialCierreActual = async (req: AuthenticatedRequest, res: R
   try {
     const historialAbierto = await HistorialCierre.findOne({ abierto: true })
       .populate('usuarioApertura', 'nombre')
-      .populate('usuarioCierre', 'nombre');
+      .populate('usuarioCierre', 'nombre'); // Ensure correct population with 'User' model
     
     if (!historialAbierto) {
       return res.status(404).json({
@@ -194,7 +194,7 @@ export const updateHistorialCierre = async (req: AuthenticatedRequest, res: Resp
     await historial!.save();
     
     await historial?.populate('usuarioApertura', 'nombre');
-    await historial?.populate('usuarioCierre', 'nombre');
+    await historial?.populate('usuarioCierre', 'nombre'); // Ensure correct population with 'User' model
     
     return res.status(200).json({
       success: true,
@@ -271,7 +271,7 @@ export const cerrarHistorialCierre = async (req: AuthenticatedRequest, res: Resp
     // Obtener historial actualizado con referencias pobladas
     const historialActualizado = await HistorialCierre.findById(historial._id)
       .populate('usuarioApertura', 'nombre')
-      .populate('usuarioCierre', 'nombre');
+      .populate('usuarioCierre', 'nombre'); // Ensure correct population with 'User' model
     
     return res.status(200).json({
       success: true,
@@ -312,4 +312,4 @@ export const deleteHistorialCierre = async (req: AuthenticatedRequest, res: Resp
       error: error instanceof Error ? error.message : 'Error desconocido'
     });
   }
-}; 
+};
