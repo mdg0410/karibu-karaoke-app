@@ -410,14 +410,15 @@ Los tokens son válidos por 24 horas. Para obtener un token, utiliza las rutas d
 
 **Endpoint:** `PUT /api/mesas/:id/estado`
 
-**Acceso:** Admin, Trabajador
+**Acceso:** Admin, Trabajador, Cliente
 
 **Descripción:** Actualiza el estado de una mesa
 
 **Body:**
 ```json
 {
-  "estado": "ocupada"
+  "estado": "ocupada",
+  "usuarioId": "67f75dd99fb28b61bf95c3a2"
 }
 ```
 

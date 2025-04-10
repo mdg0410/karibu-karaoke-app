@@ -6,12 +6,12 @@ import { verificarToken } from '../middleware/auth/userAuth';
 
 const router = express.Router();
 
+// Rutas públicas (sin autenticación)
+router.get('/disponibles', validateMesaFilters, mesaController.getMesasDisponibles);
+router.get('/:id', verificarMesaExiste, mesaController.getMesaById);
+
 // Middleware para verificar el token en todas las rutas
 router.use(verificarToken);
-
-// Rutas públicas (accesibles para todos los roles autenticados)
-router.get('/:id', verificarMesaExiste, mesaController.getMesaById);
-router.get('/disponibles', validateMesaFilters, mesaController.getMesasDisponibles);
 
 // Rutas para operaciones básicas (requieren rol admin o trabajador)
 router.get('/', verificarPermisosMesa(['admin', 'trabajador']), validateMesaFilters, mesaController.getMesas);
@@ -21,7 +21,7 @@ router.delete('/:id', verificarPermisosMesa(['admin']), verificarMesaExiste, mes
 
 // Rutas para operaciones de estado
 router.put('/:id/estado', 
-  verificarPermisosMesa(['admin', 'trabajador']),
+  verificarPermisosMesa(['admin', 'trabajador', 'cliente']),
   verificarMesaExiste,
   validateEstadoUpdate,
   validateEstadoTransition,
