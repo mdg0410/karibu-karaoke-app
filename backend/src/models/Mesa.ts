@@ -1,13 +1,39 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IHistorialMesa {
+  usuarioId: mongoose.Types.ObjectId;
+  fechaInicio: Date;
+  fechaFin?: Date;
+  estado: string;
+}
+
 export interface IMesa extends Document {
   numero: number;
-  nombre: string;
   capacidad: number;
   estado: 'disponible' | 'ocupada' | 'reservada';
+  historial: IHistorialMesa[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const HistorialMesaSchema = new Schema({
+  usuarioId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  fechaInicio: {
+    type: Date,
+    required: true
+  },
+  fechaFin: {
+    type: Date
+  },
+  estado: {
+    type: String,
+    required: true
+  }
+});
 
 const MesaSchema: Schema = new Schema(
   {
@@ -15,11 +41,6 @@ const MesaSchema: Schema = new Schema(
       type: Number,
       required: [true, 'El número de mesa es obligatorio'],
       unique: true
-    },
-    nombre: {
-      type: String,
-      required: [true, 'El nombre de la mesa es obligatorio'],
-      trim: true
     },
     capacidad: {
       type: Number,
@@ -31,7 +52,8 @@ const MesaSchema: Schema = new Schema(
       required: [true, 'El estado de la mesa es obligatorio'],
       enum: ['disponible', 'ocupada', 'reservada'],
       default: 'disponible'
-    }
+    },
+    historial: [HistorialMesaSchema]
   },
   {
     timestamps: true

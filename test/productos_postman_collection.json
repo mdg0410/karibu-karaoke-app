@@ -1,0 +1,275 @@
+{
+	"info": {
+		"_postman_id": "a5a8b7c9-df56-4e3b-9a8c-3d6e8f7g9h0j",
+		"name": "Karibu Karaoke - Productos API",
+		"description": "Colección para probar las operaciones CRUD en la API de Productos",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Obtener todos los productos",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos"
+					]
+				},
+				"description": "Obtiene todos los productos disponibles"
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener bebidas",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/categoria/bebidas",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"categoria",
+						"bebidas"
+					]
+				},
+				"description": "Obtiene todos los productos que no son de categoría comida"
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener comida",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/categoria/comida",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"categoria",
+						"comida"
+					]
+				},
+				"description": "Obtiene todos los productos de categoría comida"
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener producto por ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/{{productoId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"{{productoId}}"
+					]
+				},
+				"description": "Obtiene un producto específico por su ID"
+			},
+			"response": []
+		},
+		{
+			"name": "Crear producto",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"nombre\": \"Combo 3 Cocteles\",\n  \"categoria\": \"Combo\",\n  \"precio\": 10,\n  \"imagenURL\": \"Coctel.jpg\",\n  \"cantidad\": 10,\n  \"estado\": \"disponible\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/productos",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos"
+					]
+				},
+				"description": "Crea un nuevo producto (requiere token de administrador)"
+			},
+			"response": []
+		},
+		{
+			"name": "Actualizar producto",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"nombre\": \"Combo 3 Cocteles Actualizado\",\n  \"precio\": 12.50,\n  \"cantidad\": 8\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/{{productoId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"{{productoId}}"
+					]
+				},
+				"description": "Actualiza un producto existente (requiere token de administrador)"
+			},
+			"response": []
+		},
+		{
+			"name": "Cambiar estado producto",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"estado\": \"agotado\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/{{productoId}}/estado",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"{{productoId}}",
+						"estado"
+					]
+				},
+				"description": "Cambia el estado de un producto (requiere token de administrador)"
+			},
+			"response": []
+		},
+		{
+			"name": "Eliminar producto",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{adminToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/{{productoId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"{{productoId}}"
+					]
+				},
+				"description": "Elimina un producto (requiere token de administrador)"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "adminToken",
+			"value": "your_admin_token_here",
+			"type": "string"
+		},
+		{
+			"key": "productoId",
+			"value": "product_id_here",
+			"type": "string"
+		}
+	]
+} 

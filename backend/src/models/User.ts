@@ -4,8 +4,8 @@ export interface IUser extends Document {
   nombre: string;
   email: string;
   password: string;
-  role: 'admin' | 'staff' | 'cliente';
-  adminToken?: string;
+  telefono: string;
+  rol: 'cliente' | 'trabajador' | 'admin';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,15 +30,16 @@ const UserSchema: Schema = new Schema(
       required: [true, 'La contraseña es obligatoria'],
       minlength: [6, 'La contraseña debe tener al menos 6 caracteres']
     },
-    role: {
+    telefono: {
+      type: String,
+      required: [true, 'El teléfono es obligatorio'],
+      trim: true
+    },
+    rol: {
       type: String,
       required: [true, 'El rol es obligatorio'],
-      enum: ['admin', 'staff', 'cliente'],
+      enum: ['cliente', 'trabajador', 'admin'],
       default: 'cliente'
-    },
-    adminToken: {
-      type: String,
-      default: null
     }
   },
   {

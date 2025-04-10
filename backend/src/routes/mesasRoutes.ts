@@ -1,99 +1,38 @@
 import express from 'express';
-import { Request, Response } from 'express';
-import Mesa from '../models/Mesa';
+import * as mesaController from '../controllers/mesaController';
+import { validateCreateMesa, validateUpdateMesa, validateEstadoUpdate, validateEstadoTransition, validateMesaFilters } from '../middleware/validation/mesaValidation';
+import { verificarPermisosMesa, verificarMesaExiste, verificarEstadoMesa } from '../middleware/auth/mesaAuth';
+import { verificarToken } from '../middleware/auth/userAuth';
 
 const router = express.Router();
 
-// Ruta para verificar si una mesa está disponible por número de mesa (GET)
-router.get('/verificar/:numeromesa', async (req: Request, res: Response) => {
-  try {
-    const { numeromesa } = req.params;
-    
-    if (!numeromesa) {
-      return res.status(400).json({
-        success: false,
-        message: 'El número de mesa es requerido'
-      });
-    }
-    
-    // Buscar la mesa en la base de datos
-    const mesa = await Mesa.findOne({ numero: numeromesa });
-    
-    if (!mesa) {
-      return res.status(404).json({
-        success: false,
-        disponible: false,
-        message: 'Mesa no encontrada'
-      });
-    }
-    
-    // Verificar si la mesa está disponible
-    const disponible = mesa.estado === 'disponible';
-    
-    return res.json({
-      success: true,
-      disponible,
-      message: disponible ? 'Mesa disponible' : 'Mesa no disponible',
-      mesa: {
-        numero: mesa.numero,
-        nombre: mesa.nombre,
-        capacidad: mesa.capacidad,
-        estado: mesa.estado
-      }
-    });
-  } catch (error) {
-    console.error('Error al verificar mesa:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error al procesar la solicitud'
-    });
-  }
-});
+// Middleware para verificar el token en todas las rutas
+router.use(verificarToken);
 
-// Mantener la ruta POST para compatibilidad con el frontend existente
-router.post('/verificar', async (req: Request, res: Response) => {
-  try {
-    const { mesaId } = req.body;
-    
-    if (!mesaId) {
-      return res.status(400).json({
-        success: false,
-        message: 'El ID de mesa es requerido'
-      });
-    }
-    
-    // Buscar la mesa en la base de datos
-    const mesa = await Mesa.findOne({ numero: mesaId });
-    
-    if (!mesa) {
-      return res.status(404).json({
-        success: false,
-        disponible: false,
-        message: 'Mesa no encontrada'
-      });
-    }
-    
-    // Verificar si la mesa está disponible
-    const disponible = mesa.estado === 'disponible';
-    
-    return res.json({
-      success: true,
-      disponible,
-      message: disponible ? 'Mesa disponible' : 'Mesa no disponible',
-      mesa: {
-        numero: mesa.numero,
-        nombre: mesa.nombre,
-        capacidad: mesa.capacidad,
-        estado: mesa.estado
-      }
-    });
-  } catch (error) {
-    console.error('Error al verificar mesa:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Error al procesar la solicitud'
-    });
-  }
-});
+// Rutas públicas (accesibles para todos los roles autenticados)
+router.get('/:id', verificarMesaExiste, mesaController.getMesaById);
+router.get('/disponibles', validateMesaFilters, mesaController.getMesasDisponibles);
+
+// Rutas para operaciones básicas (requieren rol admin o trabajador)
+router.get('/', verificarPermisosMesa(['admin', 'trabajador']), validateMesaFilters, mesaController.getMesas);
+router.post('/', verificarPermisosMesa(['admin']), validateCreateMesa, mesaController.createMesa);
+router.put('/:id', verificarPermisosMesa(['admin']), verificarMesaExiste, validateUpdateMesa, mesaController.updateMesa);
+router.delete('/:id', verificarPermisosMesa(['admin']), verificarMesaExiste, mesaController.deleteMesa);
+
+// Rutas para operaciones de estado
+router.put('/:id/estado', 
+  verificarPermisosMesa(['admin', 'trabajador']),
+  verificarMesaExiste,
+  validateEstadoUpdate,
+  validateEstadoTransition,
+  mesaController.cambiarEstadoMesa
+);
+
+// Rutas para historial
+router.get('/:id/historial', 
+  verificarPermisosMesa(['admin', 'trabajador']),
+  verificarMesaExiste,
+  mesaController.getHistorialMesa
+);
 
 export default router; 

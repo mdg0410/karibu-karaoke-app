@@ -95,12 +95,24 @@ export const AuthProvider = ({ children }) => {
       try {
         // Usar la nueva ruta GET para verificar mesas
         const response = await getApi(`mesas/verificar/${mesaId}`);
+        if (response.success && response.mesa) {
+          // Guardar el ObjectId de la mesa en localStorage
+          localStorage.setItem('mesaObjectId', response.mesa._id);
+          // También guardamos el número de mesa para referencia
+          localStorage.setItem('mesaNumero', response.mesa.numero);
+        }
         return response;
       } catch (apiError) {
         // Intento con POST como fallback por compatibilidad
         try {
           console.log('Intentando con método POST como fallback...');
           const responseFallback = await postApi('mesas/verificar', { mesaId });
+          if (responseFallback.success && responseFallback.mesa) {
+            // Guardar el ObjectId de la mesa en localStorage
+            localStorage.setItem('mesaObjectId', responseFallback.mesa._id);
+            // También guardamos el número de mesa para referencia
+            localStorage.setItem('mesaNumero', responseFallback.mesa.numero);
+          }
           return responseFallback;
         } catch (postError) {
           // Si hay error de red o certificado, usar mock fallback
@@ -127,9 +139,12 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       
       try {
+        // Obtener el ObjectId de la mesa del localStorage
+        const mesaObjectId = localStorage.getItem('mesaObjectId');
+        
         const response = await postApi('clientes/registrar', {
           ...clienteData,
-          mesaId
+          mesaId: mesaObjectId // Usar el ObjectId en lugar del número
         });
         
         if (response.success) {
@@ -140,7 +155,8 @@ export const AuthProvider = ({ children }) => {
             telefono: clienteData.telefono,
             role: 'cliente',
             token: response.token,
-            mesaId
+            mesaId: mesaObjectId, // Usar el ObjectId en lugar del número
+            mesaNumero: localStorage.getItem('mesaNumero') // Guardar también el número de mesa
           };
           
           // Establecer el usuario actual en el contexto
@@ -149,7 +165,6 @@ export const AuthProvider = ({ children }) => {
           // Guardar datos en localStorage
           localStorage.setItem('user', JSON.stringify(userData));
           localStorage.setItem('clienteToken', response.token);
-          localStorage.setItem('mesaId', mesaId);
           
           return { 
             success: true, 
@@ -177,7 +192,8 @@ export const AuthProvider = ({ children }) => {
             telefono: clienteData.telefono,
             role: 'cliente',
             token: mockResponse.token,
-            mesaId
+            mesaId: mesaId,
+            mesaNumero: mesaId
           };
           
           // Establecer el usuario actual en el contexto
@@ -186,7 +202,8 @@ export const AuthProvider = ({ children }) => {
           // Guardar datos en localStorage
           localStorage.setItem('user', JSON.stringify(userData));
           localStorage.setItem('clienteToken', mockResponse.token);
-          localStorage.setItem('mesaId', mesaId);
+          localStorage.setItem('mesaObjectId', mesaId); // En modo fallback, usar el número como ID
+          localStorage.setItem('mesaNumero', mesaId);
           
           return { 
             success: true, 
@@ -199,7 +216,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error al registrar cliente:', error);
-      setError(error.message || 'Error desconocido al registrar cliente');
+      setError(error.message || 'Error al registrar cliente');
       return { success: false, message: error.message };
     } finally {
       setLoading(false);

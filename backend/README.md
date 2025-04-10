@@ -1,63 +1,100 @@
-# Karibu Karaoke App - Backend
+# Backend de Karibu Karaoke
 
-## Descripción
-Karibu Karaoke App es una aplicación de karaoke que permite a los usuarios registrarse, solicitar canciones y realizar pedidos en un entorno interactivo. Este backend está construido utilizando Node.js y Express, y se conecta a una base de datos MongoDB para almacenar la información de usuarios, productos, pedidos y solicitudes de canciones.
+Este es el servidor backend para la aplicación Karibu Karaoke, desarrollado con Node.js, Express y MongoDB.
 
-## Estructura del Proyecto
-```
-karibu-karaoke-app
-├── backend
-│   ├── src
-│   │   └── server.js        # Punto de entrada del servidor
-│   ├── package.json         # Configuración de npm
-│   └── README.md            # Documentación del backend
-└── frontend
-    ├── public
-    │   └── index.html       # Plantilla HTML principal
-    ├── src
-    │   ├── App.jsx          # Componente principal de React
-    │   └── index.jsx        # Punto de entrada de la aplicación React
-    ├── package.json         # Configuración de npm para el frontend
-    └── README.md            # Documentación del frontend
-```
+## Requisitos previos
+
+- Node.js (v14 o superior)
+- MongoDB (local o en la nube)
+- npm o yarn
 
 ## Instalación
 
 1. Clona el repositorio:
-   ```
-   git clone https://github.com/tu_usuario/karibu-karaoke-app.git
-   ```
 
-2. Navega al directorio del backend:
-   ```
-   cd karibu-karaoke-app/backend
-   ```
+```bash
+git clone https://github.com/tu-usuario/karibu-karaoke-app.git
+cd karibu-karaoke-app/backend
+```
 
-3. Instala las dependencias:
-   ```
-   npm install
-   ```
+2. Instala las dependencias:
 
-4. Configura las variables de entorno necesarias para la conexión a MongoDB.
+```bash
+npm install
+# o
+yarn install
+```
 
-## Uso
+3. Copia el archivo `.env.example` a `.env` y configura las variables de entorno:
 
-1. Inicia el servidor:
-   ```
-   npm start
-   ```
+```bash
+cp .env.example .env
+```
 
-2. El servidor estará corriendo en `http://localhost:5000` (puedes cambiar el puerto en la configuración).
+4. Edita el archivo `.env` con tus configuraciones:
 
-## Endpoints
+```
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/karibu_karaoke
+JWT_SECRET=tu_clave_secreta_jwt
+NODE_ENV=development
+```
 
-- `POST /api/auth/register`: Registra un nuevo usuario.
-- `GET /api/products`: Obtiene la lista de productos disponibles.
-- `POST /api/songs`: Envía una solicitud de canción.
-- `POST /api/orders`: Crea un nuevo pedido.
+## Ejecución
 
-## Contribuciones
-Las contribuciones son bienvenidas. Si deseas contribuir, por favor abre un issue o envía un pull request.
+### Modo de desarrollo
 
-## Licencia
-Este proyecto está bajo la Licencia MIT.
+```bash
+npm run dev
+# o
+yarn dev
+```
+
+### Modo de producción
+
+```bash
+npm run build
+npm start
+# o
+yarn build
+yarn start
+```
+
+## Estructura del proyecto
+
+```
+src/
+  ├── controllers/       # Controladores para manejar la lógica de negocio
+  ├── middleware/        # Middleware de autenticación, validación, etc.
+  │   ├── auth/          # Funciones de autenticación 
+  │   └── validation/    # Funciones de validación
+  ├── models/            # Modelos de la base de datos (Mongoose)
+  ├── routes/            # Definición de rutas API
+  ├── types/             # Definiciones de TypeScript
+  ├── utils/             # Utilidades y helpers
+  ├── app.ts             # Configuración de la aplicación Express
+  ├── server.ts          # Punto de entrada del servidor
+  └── config.ts          # Configuraciones del servidor
+```
+
+## API
+
+La documentación completa de la API está disponible en el archivo [API_DOCUMENTATION.md](./API_DOCUMENTATION.md).
+
+## Scripts disponibles
+
+- `npm run dev`: Inicia el servidor en modo desarrollo con hot-reload
+- `npm run build`: Compila el código TypeScript a JavaScript
+- `npm start`: Inicia el servidor en modo producción
+- `npm run lint`: Ejecuta el linter para verificar el código
+- `npm run test`: Ejecuta las pruebas unitarias
+
+## Características principales
+
+- Autenticación mediante JWT
+- Validación de datos con express-validator
+- Base de datos MongoDB con Mongoose
+- APIs RESTful
+- Soporte para TypeScript
+- Autorización basada en roles (admin, trabajador, cliente)
+- Gestión de mesas, productos, pedidos, canciones y cierres de caja

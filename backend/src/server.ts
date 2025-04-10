@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { connectDB } from './config/database';
 import routes from './routes';
 
@@ -60,18 +61,46 @@ if (NODE_ENV === 'development' && USE_HTTPS) {
   console.log('Usando servidor HTTP');
 }
 
+// Función para cerrar la conexión de MongoDB y el servidor
+const gracefulShutdown = async () => {
+  try {
+    console.log('\nIniciando cierre controlado del servidor...');
+    
+    // Cerrar el servidor HTTP/HTTPS
+    await new Promise<void>((resolve) => {
+      server.close(() => {
+        console.log('Servidor HTTP/HTTPS cerrado correctamente');
+        resolve();
+      });
+    });
+
+    // Cerrar la conexión de MongoDB
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.close();
+      console.log('Conexión de MongoDB cerrada correctamente');
+    }
+
+    console.log('Proceso de cierre completado');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error durante el cierre del servidor:', error);
+    process.exit(1);
+  }
+};
+
 // Iniciar el servidor
 server.listen(PORT, () => {
   console.log(`Servidor corriendo en ${NODE_ENV === 'development' && server instanceof https.Server ? 'https' : 'http'}://localhost:${PORT}`);
+  console.log(`Ambiente: ${NODE_ENV}`);
+  console.log(`Estado de MongoDB: ${mongoose.connection.readyState === 1 ? 'Conectado' : 'Desconectado'}`);
 });
 
 // Manejar señales de terminación
-process.on('SIGTERM', () => {
-  console.log('SIGTERM recibido, cerrando servidor...');
-  server.close(() => {
-    console.log('Servidor cerrado');
-    process.exit(0);
-  });
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+process.on('uncaughtException', async (error) => {
+  console.error('Error no controlado:', error);
+  await gracefulShutdown();
 });
 
 export default server;
