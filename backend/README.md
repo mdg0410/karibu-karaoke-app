@@ -1,14 +1,116 @@
-# Backend de Karibu Karaoke
+# Backend Karibu Karaoke
 
-Este es el servidor backend para la aplicación Karibu Karaoke, desarrollado con Node.js, Express y MongoDB.
+Sistema de gestión integral para karaoke desarrollado con Node.js, Express y MongoDB, implementando una arquitectura modular y escalable.
 
-## Requisitos previos
+## 📋 Descripción General
 
-- Node.js (v14 o superior)
-- MongoDB (local o en la nube)
-- npm o yarn
+Karibu Karaoke Backend es una API RESTful que gestiona todas las operaciones necesarias para el funcionamiento de un karaoke, incluyendo:
 
-## Instalación
+- Gestión de pedidos y productos
+- Sistema de mesas y reservaciones
+- Control de usuarios y autenticación
+- Administración de canciones
+- Sistema de caja y facturación
+
+## 🏗️ Arquitectura del Sistema
+
+### Capas de la Aplicación
+
+1. **Capa de Entrada**
+   - Server.ts: Punto de entrada principal
+   - Middlewares de seguridad y validación
+   - Sistema de enrutamiento modular
+
+2. **Capa de Negocio**
+   - Controladores específicos por dominio
+   - Servicios de autenticación y autorización
+   - Lógica de negocio modular
+
+3. **Capa de Datos**
+   - Modelos MongoDB/Mongoose
+   - Utilidades de base de datos
+   - Gestión de transacciones
+
+### Modelos Principales
+
+```typescript
+// Ejemplos simplificados de los modelos principales
+
+// Usuario
+interface IUser {
+  nombre: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'staff' | 'cliente';
+}
+
+// Pedido
+interface IPedido {
+  numeroMesa: number;
+  clienteId: string;
+  detalles: IPedidoDetalle[];
+  estado: 'pendiente' | 'en_proceso' | 'completado';
+  total: number;
+}
+
+// Mesa
+interface IMesa {
+  numero: number;
+  capacidad: number;
+  estado: 'disponible' | 'ocupada' | 'reservada';
+}
+```
+
+## 🔒 Seguridad
+
+### Autenticación
+- JWT (JSON Web Tokens)
+- Refresh Tokens
+- Encriptación de contraseñas con bcrypt
+
+### Autorización
+- Sistema de roles (admin, staff, cliente)
+- Middleware de verificación por ruta
+- Validación de permisos granular
+
+## 🚀 Características Técnicas
+
+### Gestión de Pedidos
+- Sistema de estados con transiciones validadas
+- Cálculo automático de totales
+- Histórico de cambios
+- Asignación de trabajadores
+
+### Sistema de Mesas
+- Control de estados en tiempo real
+- Sistema de reservaciones
+- Gestión de capacidad
+- Histórico de ocupación
+
+### Gestión de Productos
+- Categorización
+- Control de stock
+- Precios dinámicos
+- Imágenes y descripciones
+
+## 📦 Estructura de Directorios Detallada
+
+```
+backend/
+├── src/
+│   ├── config/          # Configuraciones del sistema
+│   ├── controllers/     # Controladores de dominio
+│   ├── middleware/      # Middlewares personalizados
+│   ├── models/          # Modelos de datos
+│   ├── routes/          # Definición de rutas
+│   ├── services/        # Servicios de negocio
+│   ├── types/           # Tipos TypeScript
+│   └── utils/           # Utilidades generales
+├── tests/               # Tests unitarios y de integración
+└── docs/               # Documentación adicional
+```
+
+## 🛠️ Instalación y Configuración
 
 1. Clona el repositorio:
 
@@ -60,41 +162,18 @@ yarn build
 yarn start
 ```
 
-## Estructura del proyecto
+## 📚 Documentación Adicional
 
-```
-src/
-  ├── controllers/       # Controladores para manejar la lógica de negocio
-  ├── middleware/        # Middleware de autenticación, validación, etc.
-  │   ├── auth/          # Funciones de autenticación 
-  │   └── validation/    # Funciones de validación
-  ├── models/            # Modelos de la base de datos (Mongoose)
-  ├── routes/            # Definición de rutas API
-  ├── types/             # Definiciones de TypeScript
-  ├── utils/             # Utilidades y helpers
-  ├── app.ts             # Configuración de la aplicación Express
-  ├── server.ts          # Punto de entrada del servidor
-  └── config.ts          # Configuraciones del servidor
-```
+La documentación detallada de la API y guías adicionales están disponibles en:
 
-## API
+- [Documentación API Completa](./docs/API_DOCUMENTATION.md)
+- [Guía de Desarrollo](./docs/DEVELOPMENT_GUIDE.md)
+- [Guía de Contribución](./docs/CONTRIBUTING.md)
 
-La documentación completa de la API está disponible en el archivo [API_DOCUMENTATION.md](./API_DOCUMENTATION.md).
+## 🤝 Contribución
 
-## Scripts disponibles
+Las contribuciones son bienvenidas. Por favor, lee nuestra [Guía de Contribución](./docs/CONTRIBUTING.md) antes de enviar un pull request.
 
-- `npm run dev`: Inicia el servidor en modo desarrollo con hot-reload
-- `npm run build`: Compila el código TypeScript a JavaScript
-- `npm start`: Inicia el servidor en modo producción
-- `npm run lint`: Ejecuta el linter para verificar el código
-- `npm run test`: Ejecuta las pruebas unitarias
+## 📄 Licencia
 
-## Características principales
-
-- Autenticación mediante JWT
-- Validación de datos con express-validator
-- Base de datos MongoDB con Mongoose
-- APIs RESTful
-- Soporte para TypeScript
-- Autorización basada en roles (admin, trabajador, cliente)
-- Gestión de mesas, productos, pedidos, canciones y cierres de caja
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
