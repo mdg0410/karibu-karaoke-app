@@ -29,7 +29,14 @@ export const validarCrearPedido = [
         throw new Error('El estado del pedido no es válido');
       }
       return true;
-    })
+    }),
+  
+  check('observaciones')
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Las observaciones no pueden exceder los 500 caracteres')
 ];
 
 export const validarCambioEstadoPedido = [
@@ -172,4 +179,4 @@ export const validarBusquedaPedidos = [
     .optional()
     .isFloat({ min: 0 })
     .withMessage('El total máximo debe ser un número mayor o igual a 0')
-]; 
+];

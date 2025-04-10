@@ -188,6 +188,138 @@ Recupera la información de un usuario específico.
 }
 ```
 
+## Pedidos
+
+### Crear un nuevo pedido
+
+Crea un nuevo pedido con múltiples productos.
+
+- **URL**: `/api/pedidos`
+- **Método**: `POST`
+- **Requiere autenticación**: Sí, roles 'cliente', 'staff', o 'admin'
+
+#### Parámetros de solicitud
+
+```json
+{
+  "mesaId": "60d21b4667d0d8992e610c85",
+  "productos": [
+    {
+      "productoId": "60d21b4667d0d8992e610c86",
+      "cantidad": 2
+    },
+    {
+      "productoId": "60d21b4667d0d8992e610c87",
+      "cantidad": 1
+    }
+  ],
+  "observaciones": "Sin cebolla en la hamburguesa"
+}
+```
+
+#### Respuestas
+
+- **Éxito (201 Created)**
+
+```json
+{
+  "success": true,
+  "message": "Pedido creado exitosamente",
+  "data": {
+    "id": "60d21b4667d0d8992e610c88",
+    "mesaId": "60d21b4667d0d8992e610c85",
+    "productos": [
+      {
+        "productoId": "60d21b4667d0d8992e610c86",
+        "nombre": "Hamburguesa",
+        "cantidad": 2,
+        "precioUnitario": 5.99,
+        "subtotal": 11.98
+      },
+      {
+        "productoId": "60d21b4667d0d8992e610c87",
+        "nombre": "Refresco",
+        "cantidad": 1,
+        "precioUnitario": 1.99,
+        "subtotal": 1.99
+      }
+    ],
+    "total": 13.97,
+    "observaciones": "Sin cebolla en la hamburguesa",
+    "estado": "pendiente",
+    "createdAt": "2023-04-01T12:00:00.000Z"
+  }
+}
+```
+
+- **Error (400 Bad Request)**
+
+```json
+{
+  "success": false,
+  "message": "La mesa especificada no existe"
+}
+```
+
+### Obtener todos los pedidos
+
+Recupera una lista de pedidos con filtros opcionales.
+
+- **URL**: `/api/pedidos`
+- **Método**: `GET`
+- **Requiere autenticación**: Sí, roles 'staff' o 'admin'
+
+#### Parámetros de consulta
+
+- `estado`: Filtrar por estado del pedido ('pendiente', 'en preparación', 'completado')
+- `mesaId`: Filtrar por ID de mesa
+- `fechaDesde`: Filtrar desde fecha (formato ISO)
+- `fechaHasta`: Filtrar hasta fecha (formato ISO)
+
+#### Respuestas
+
+- **Éxito (200 OK)**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "60d21b4667d0d8992e610c88",
+      "mesaId": "60d21b4667d0d8992e610c85",
+      "productos": [
+        {
+          "productoId": "60d21b4667d0d8992e610c86",
+          "nombre": "Hamburguesa",
+          "cantidad": 2,
+          "precioUnitario": 5.99,
+          "subtotal": 11.98
+        },
+        {
+          "productoId": "60d21b4667d0d8992e610c87",
+          "nombre": "Refresco",
+          "cantidad": 1,
+          "precioUnitario": 1.99,
+          "subtotal": 1.99
+        }
+      ],
+      "total": 13.97,
+      "estado": "pendiente",
+      "createdAt": "2023-04-01T12:00:00.000Z"
+    }
+  ]
+}
+```
+
+- **Error (400 Bad Request)**
+
+```json
+{
+  "success": false,
+  "message": "Parámetros de consulta inválidos"
+}
+```
+
 ## Historial de Cierre
 
 El historial de cierre se utiliza para gestionar las aperturas y cierres de caja en el sistema.
@@ -539,4 +671,4 @@ Elimina un historial de cierre.
 - Las respuestas de error incluyen el campo `message` con una descripción del problema.
 - Las respuestas exitosas incluyen el campo `success: true` y, cuando corresponde, un objeto `data` con los datos solicitados.
 - Las operaciones de listado admiten paginación mediante los parámetros `page` y `limit`.
-- La mayoría de los endpoints de listado permiten filtrado mediante parámetros de consulta específicos. 
+- La mayoría de los endpoints de listado permiten filtrado mediante parámetros de consulta específicos.

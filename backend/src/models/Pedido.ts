@@ -25,6 +25,7 @@ export interface IPedido extends Document {
   historialCambios: IHistorialCambio[];
   createdAt: Date;
   updatedAt: Date;
+  observaciones?: string;
 }
 
 const HistorialCambioSchema = new Schema({
@@ -102,7 +103,12 @@ const PedidoSchema: Schema = new Schema(
       required: true,
       min: [0, 'El total no puede ser negativo']
     },
-    historialCambios: [HistorialCambioSchema]
+    historialCambios: [HistorialCambioSchema],
+    observaciones: {
+      type: String,
+      trim: true,
+      maxlength: [500, 'Las observaciones no pueden exceder los 500 caracteres']
+    }
   },
   {
     timestamps: true
@@ -124,4 +130,4 @@ PedidoSchema.index({ estado: 1 });
 PedidoSchema.index({ createdAt: 1 });
 PedidoSchema.index({ 'historialCambios.trabajadorId': 1 });
 
-export default mongoose.model<IPedido>('Pedido', PedidoSchema); 
+export default mongoose.model<IPedido>('Pedido', PedidoSchema);
