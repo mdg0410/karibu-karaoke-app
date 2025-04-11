@@ -1,17 +1,23 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
+import { hasActiveSession } from '../utils/localStorage';
 
-const ProtectedRoute = ({ children }) => {
-  // Obtener el token del localStorage
-  const token = localStorage.getItem('token');
-  
-  // Si no hay token, redirigir a la página de inicio
-  if (!token) {
+/**
+ * Componente para proteger rutas que requieren autenticación
+ * Verifica si existe un token válido en localStorage
+ * 
+ * @returns {JSX.Element} El componente hijo (Outlet) o redirección a inicio
+ */
+const ProtectedRoute = () => {
+  const isAuthenticated = hasActiveSession();
+
+  // Si no está autenticado, redirigir a la página principal
+  if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
-  
-  // Si hay token, renderizar los componentes hijos
-  return children;
+
+  // Si está autenticado, renderizar los componentes hijos
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

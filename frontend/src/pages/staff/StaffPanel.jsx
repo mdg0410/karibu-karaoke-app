@@ -1,87 +1,177 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StaffLayout from '../../layouts/StaffLayout';
+import useAuth from '../../hooks/useAuth';
+import useMesa from '../../hooks/useMesa';
+import Alert from '../../components/common/Alert';
+import Loader from '../../components/common/Loader';
 
 const StaffPanel = () => {
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
-  
-  // Verificar si hay un usuario y token en localStorage
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-  const token = localStorage.getItem('token');
-  
-  useEffect(() => {
-    // Si no hay usuario o token, o el rol no es trabajador, redirigir al login
-    if (!user || !token || user.rol !== 'trabajador') {
-      navigate('/staff/login');
-    }
-  }, [user, token, navigate]);
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { mesas, obtenerMesas, actualizarDatosMesa, loading: mesaLoading } = useMesa();
 
-  // Si no hay usuario, mostramos un loader mientras se completa la redirección
-  if (!user || !token || user.rol !== 'trabajador') {
+  useEffect(() => {
+    // Verificar si el usuario está autenticado como staff
+    if (!isAuthenticated || !user) {
+      navigate('/staff/login');
+      return;
+    }
+
+    if (user.rol !== 'trabajador') {
+      navigate('/');
+      return;
+    }
+
+    // Cargar lista de mesas
+    obtenerMesas().catch(err => {
+      setError('Error al cargar las mesas. Por favor, intenta nuevamente.');
+    });
+  }, [isAuthenticated, user, navigate]);
+
+  const handleCambiarEstadoMesa = async (mesaId, nuevoEstado) => {
+    try {
+      await actualizarDatosMesa(mesaId, { estado: nuevoEstado });
+      setSuccess(`Mesa ${mesaId} actualizada correctamente a estado: ${nuevoEstado}`);
+      
+      // Limpiar mensaje después de 3 segundos
+      setTimeout(() => {
+        setSuccess('');
+      }, 3000);
+    } catch (err) {
+      setError(`Error al actualizar la mesa ${mesaId}: ${err.message}`);
+    }
+  };
+
+  if (authLoading || mesaLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-karaoke-black">
-        <div className="bg-karaoke-darkgray p-6 rounded-xl shadow-neumorph">
-          <p className="text-primary text-xl">Cargando...</p>
+      <StaffLayout>
+        <div className="flex justify-center items-center h-[60vh]">
+          <Loader text="Cargando información..." />
         </div>
-      </div>
+      </StaffLayout>
     );
   }
 
   return (
     <StaffLayout>
-      <div className="space-y-6 md:space-y-8 animate-fade-in">
-        <div className="bg-karaoke-gray p-5 md:p-6 rounded-xl shadow-neumorph-inset">
-          <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4 text-primary">Panel de Staff</h2>
-          <p className="text-white">Bienvenido, {user.nombre}. Gestiona las mesas y pedidos del local.</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          <div className="bg-karaoke-navy p-5 rounded-xl shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 cursor-pointer group">
-            <h3 className="text-lg md:text-xl font-bold mb-2 text-primary-light group-hover:text-primary">Estado de Mesas</h3>
-            <p className="text-white text-sm md:text-base mb-4">Visualiza y gestiona las mesas activas.</p>
-            <div className="bg-karaoke-navyLight p-3 rounded-lg text-center shadow-neumorph-inset">
-              <span className="font-bold text-xl text-primary">12</span>
-              <p className="text-sm text-white">Mesas activas</p>
-            </div>
-          </div>
-          
-          <div className="bg-karaoke-darkgray p-5 rounded-xl shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 cursor-pointer group">
-            <h3 className="text-lg md:text-xl font-bold mb-2 text-primary-light group-hover:text-primary">Pedidos Pendientes</h3>
-            <p className="text-white text-sm md:text-base mb-4">Revisa los pedidos que necesitan atención.</p>
-            <div className="bg-karaoke-gray p-3 rounded-lg text-center shadow-neumorph-inset">
-              <span className="font-bold text-xl text-primary">5</span>
-              <p className="text-sm text-white">Pedidos por entregar</p>
-            </div>
-          </div>
-          
-          <div className="bg-karaoke-navy p-5 rounded-xl shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 cursor-pointer group">
-            <h3 className="text-lg md:text-xl font-bold mb-2 text-primary-light group-hover:text-primary">Cola de Karaoke</h3>
-            <p className="text-white text-sm md:text-base mb-4">Administra la lista de reproduccción.</p>
-            <div className="bg-karaoke-navyLight p-3 rounded-lg text-center shadow-neumorph-inset">
-              <span className="font-bold text-xl text-primary">8</span>
-              <p className="text-sm text-white">Canciones en cola</p>
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="mb-6 bg-karaoke-gray p-5 rounded-xl shadow-neumorph">
+          <div className="flex flex-wrap justify-between items-center">
+            <div>
+              <h2 className="text-2xl font-bold text-primary">Panel de Trabajador</h2>
+              <p className="text-primary-light mt-1">
+                Usuario: <span className="font-semibold">{user?.nombre}</span>
+              </p>
             </div>
           </div>
         </div>
-        
-        <div className="bg-karaoke-gray p-5 md:p-6 rounded-xl shadow-neumorph">
-          <h3 className="text-lg md:text-xl font-bold mb-4 text-primary">Actividad Reciente</h3>
+
+        {error && (
+          <Alert 
+            type="error" 
+            message={error} 
+            className="mb-4"
+            onClose={() => setError('')}
+          />
+        )}
+
+        {success && (
+          <Alert 
+            type="success" 
+            message={success} 
+            className="mb-4"
+            onClose={() => setSuccess('')}
+          />
+        )}
+
+        <div className="mb-6">
+          <h3 className="text-xl font-bold mb-4 text-primary">Gestión de Mesas</h3>
           
-          <div className="space-y-4">
-            <div className="border-l-4 border-primary pl-4 py-2 bg-karaoke-darkgray rounded-r-lg shadow-neumorph-inset">
-              <p className="font-medium text-white">Mesa 5 ha solicitado atención</p>
-              <p className="text-sm text-gray-400">Hace 2 minutos</p>
-            </div>
-            
-            <div className="border-l-4 border-green-500 pl-4 py-2 bg-karaoke-darkgray rounded-r-lg shadow-neumorph-inset">
-              <p className="font-medium text-white">Nuevo pedido en Mesa 3</p>
-              <p className="text-sm text-gray-400">Hace 15 minutos</p>
-            </div>
-            
-            <div className="border-l-4 border-blue-500 pl-4 py-2 bg-karaoke-darkgray rounded-r-lg shadow-neumorph-inset">
-              <p className="font-medium text-white">Mesa 8 ha añadido una canción</p>
-              <p className="text-sm text-gray-400">Hace 20 minutos</p>
-            </div>
+          <div className="overflow-x-auto bg-karaoke-gray rounded-xl shadow-neumorph">
+            <table className="min-w-full divide-y divide-karaoke-darkgray">
+              <thead className="bg-karaoke-darkgray">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-primary uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-primary uppercase tracking-wider">
+                    Número
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-primary uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-primary uppercase tracking-wider">
+                    Capacidad
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-primary uppercase tracking-wider">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-karaoke-gray divide-y divide-karaoke-darkgray">
+                {mesas && mesas.length > 0 ? (
+                  mesas.map((mesa) => (
+                    <tr key={mesa.id} className="hover:bg-karaoke-darkgray/30">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {mesa.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {mesa.numero}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${mesa.estado === 'disponible' ? 'bg-green-100 text-green-800' : 
+                            mesa.estado === 'ocupada' ? 'bg-red-100 text-red-800' : 
+                            mesa.estado === 'mantenimiento' ? 'bg-yellow-100 text-yellow-800' : 
+                            'bg-gray-100 text-gray-800'}`}>
+                          {mesa.estado}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
+                        {mesa.capacidad}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          {mesa.estado !== 'disponible' && (
+                            <button
+                              onClick={() => handleCambiarEstadoMesa(mesa.id, 'disponible')}
+                              className="text-green-400 hover:text-green-600 transition-colors"
+                            >
+                              Disponible
+                            </button>
+                          )}
+                          {mesa.estado !== 'ocupada' && (
+                            <button
+                              onClick={() => handleCambiarEstadoMesa(mesa.id, 'ocupada')}
+                              className="text-red-400 hover:text-red-600 transition-colors"
+                            >
+                              Ocupada
+                            </button>
+                          )}
+                          {mesa.estado !== 'mantenimiento' && (
+                            <button
+                              onClick={() => handleCambiarEstadoMesa(mesa.id, 'mantenimiento')}
+                              className="text-yellow-400 hover:text-yellow-600 transition-colors"
+                            >
+                              Mantenimiento
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-white">
+                      No hay mesas disponibles
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

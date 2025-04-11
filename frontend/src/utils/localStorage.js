@@ -1,5 +1,5 @@
 /**
- * Utilities para gestionar la persistencia de datos en localStorage
+ * Funciones para manipular el localStorage y gestionar la sesión de usuario
  */
 
 // Constantes para las keys de localStorage
@@ -17,12 +17,9 @@ export const STORAGE_KEYS = {
  * @param {string} sessionData.mesaId - ID de la mesa (opcional)
  */
 export const saveSession = ({ user, token, mesaId }) => {
-  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-  localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-  
-  if (mesaId) {
-    localStorage.setItem(STORAGE_KEYS.MESA_ID, mesaId);
-  }
+  if (user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+  if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
+  if (mesaId) localStorage.setItem(STORAGE_KEYS.MESA_ID, mesaId);
 };
 
 /**
@@ -31,7 +28,7 @@ export const saveSession = ({ user, token, mesaId }) => {
  */
 export const getSession = () => {
   return {
-    user: JSON.parse(localStorage.getItem(STORAGE_KEYS.USER)),
+    user: JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'),
     token: localStorage.getItem(STORAGE_KEYS.TOKEN),
     mesaId: localStorage.getItem(STORAGE_KEYS.MESA_ID)
   };
@@ -93,6 +90,25 @@ export const clearSession = (includeMesa = true) => {
   }
 };
 
+/**
+ * Verificar si hay una sesión activa
+ * @returns {boolean} true si hay una sesión activa, false si no
+ */
+export const hasActiveSession = () => {
+  const { token, user } = getSession();
+  return !!token && !!user;
+};
+
+/**
+ * Verificar rol de usuario
+ * @param {string} requiredRole - Rol requerido
+ * @returns {boolean} true si el usuario tiene el rol requerido, false si no
+ */
+export const checkUserRole = (requiredRole) => {
+  const { user } = getSession();
+  return user && user.rol === requiredRole;
+};
+
 export default {
   saveSession,
   getSession,
@@ -102,5 +118,7 @@ export default {
   isAuthenticated,
   hasRole,
   clearSession,
+  hasActiveSession,
+  checkUserRole,
   STORAGE_KEYS
 };

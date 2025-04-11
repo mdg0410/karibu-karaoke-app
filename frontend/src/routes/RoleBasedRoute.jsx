@@ -1,17 +1,27 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { checkUserRole } from '../utils/localStorage';
 
-const RoleBasedRoute = ({ children, rol }) => {
-  // Obtener el usuario del localStorage
-  const user = JSON.parse(localStorage.getItem('user'));
-  
-  // Si no hay usuario o el rol no coincide, redirigir a la página de inicio
-  if (!user || user.rol !== rol) {
-    return <Navigate to="/" replace />;
+/**
+ * Componente para proteger rutas basadas en roles
+ * Verifica si el usuario tiene el rol requerido
+ * 
+ * @param {Object} props - Propiedades del componente
+ * @param {string} props.requiredRole - Rol requerido ('admin', 'trabajador', 'cliente')
+ * @param {string} props.redirectPath - Ruta a la que redirigir si no tiene permiso
+ * @returns {JSX.Element} El componente hijo (Outlet) o redirección a la ruta especificada
+ */
+const RoleBasedRoute = ({ requiredRole, redirectPath = '/' }) => {
+  const location = useLocation();
+  const hasPermission = checkUserRole(requiredRole);
+
+  // Si no tiene el rol requerido, redirigir a la ruta especificada
+  if (!hasPermission) {
+    return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
-  
-  // Si el rol coincide, renderizar los componentes hijos
-  return children;
+
+  // Si tiene el rol requerido, renderizar los componentes hijos
+  return <Outlet />;
 };
 
 export default RoleBasedRoute;
