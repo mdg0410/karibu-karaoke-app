@@ -109,16 +109,5 @@ export const checkUserRole = (requiredRole) => {
   return user && user.rol === requiredRole;
 };
 
-export default {
-  saveSession,
-  getSession,
-  getUser,
-  getToken,
-  getMesaId,
-  isAuthenticated,
-  hasRole,
-  clearSession,
-  hasActiveSession,
-  checkUserRole,
-  STORAGE_KEYS
-};
+// Eliminamos el export default ya que todas las funciones ya están siendo exportadas individualmente
+// Esto evita confusiones al importar

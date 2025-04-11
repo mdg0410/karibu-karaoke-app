@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getToken, clearSession, STORAGE_KEYS } from '../utils/localStorage';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -6,7 +7,7 @@ const API_URL = 'http://localhost:5000/api';
 export const setupAuthInterceptor = () => {
   axios.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -19,8 +20,6 @@ export const setupAuthInterceptor = () => {
 // Registro de usuario (rol cliente)
 export const registrarCliente = async (userData) => {
   try {
-    console.log('Datos de registro:', userData);
-    
     // Normalizar los datos para que coincidan con el formato del backend
     const datosNormalizados = {
       nombre: userData.nombre,
@@ -72,9 +71,7 @@ export const verificarToken = async () => {
   }
 };
 
-// Cerrar sesión (sólo limpia localStorage, no hay endpoint específico)
+// Cerrar sesión (utilizando la función clearSession de localStorage.js)
 export const logout = () => {
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
-  localStorage.removeItem('mesaId');
+  clearSession(true);
 };

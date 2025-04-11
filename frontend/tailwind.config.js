@@ -28,7 +28,6 @@ export default {
           card: '#1E1E1E',    // Gris oscuro para tarjetas
           secondary: '#2A2A2A' // Gris medio
         },
-        "dark-card": "#141414",
       },
       fontFamily: {
         sans: ['Poppins', 'sans-serif'],
