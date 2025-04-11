@@ -19,10 +19,19 @@ export const setupAuthInterceptor = () => {
 // Registro de usuario (rol cliente)
 export const registrarCliente = async (userData) => {
   try {
-    const response = await axios.post(`${API_URL}/usuarios/registro`, {
-      ...userData,
-      rol: 'cliente'
-    });
+    console.log('Datos de registro:', userData);
+    
+    // Normalizar los datos para que coincidan con el formato del backend
+    const datosNormalizados = {
+      nombre: userData.nombre,
+      email: userData.email,
+      password: userData.password || 'password123',
+      telefono: userData.celular,  // Mapear celular a telefono
+      rol: 'cliente',              // Usar rol en lugar de role
+      mesaId: userData.mesaId      // Mantener mesaId para la asociación
+    };
+    
+    const response = await axios.post(`${API_URL}/usuarios/registro`, datosNormalizados);
     
     // Normalizar los datos para mantener la consistencia en la aplicación
     const result = {
