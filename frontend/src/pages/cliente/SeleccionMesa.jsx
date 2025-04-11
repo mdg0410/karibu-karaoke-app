@@ -6,24 +6,27 @@ import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 
 const SeleccionMesa = () => {
-  const [mesaId, setMesaId] = useState('');
+  const [mesaInput, setMesaInput] = useState('');
   const [error, setError] = useState('');
   const [validando, setValidando] = useState(false);
   const navigate = useNavigate();
   const params = useParams();
-  const { validarMesaDisponible, seleccionarMesa, loading, error: mesaError } = useMesa();
+  const { validarMesaDisponible, seleccionarMesa, loading, error: mesaError, limpiarError } = useMesa();
 
   useEffect(() => {
+    // Limpiar errores al montar el componente
+    limpiarError();
+    
     // Si hay un error en el estado de Redux, mostrarlo
     if (mesaError) {
       setError(mesaError);
     }
-  }, [mesaError]);
+  }, [limpiarError, mesaError]);
 
   useEffect(() => {
     // Si hay un ID de mesa en los parámetros de la URL, lo validamos automáticamente
     if (params.id && !validando) {
-      setMesaId(params.id);
+      setMesaInput(params.id);
       setValidando(true);
       handleValidarMesa(params.id);
     }
@@ -32,22 +35,33 @@ const SeleccionMesa = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!mesaId.trim()) {
-      setError('Por favor, ingresa el número de mesa');
+    if (!mesaInput.trim()) {
+      setError('Por favor, ingresa el número o ID de mesa');
       return;
     }
     
-    handleValidarMesa(mesaId);
+    handleValidarMesa(mesaInput);
   };
 
-  const handleValidarMesa = async (id) => {
+  const handleValidarMesa = async (mesaIdentificador) => {
     setError('');
     setValidando(true);
     
     try {
-      await validarMesaDisponible(id);
-      seleccionarMesa(id);
+      console.log('Validando mesa:', mesaIdentificador);
+      const resultado = await validarMesaDisponible(mesaIdentificador);
+      
+      if (resultado && resultado.disponible) {
+        // Usar el ID de la mesa (ObjectID) para la selección, no el número
+        console.log('Mesa válida, seleccionando:', resultado.mesa.id);
+        seleccionarMesa(resultado.mesa.id);
+      } else {
+        console.log('Mesa no disponible:', resultado);
+        setError('Esta mesa no está disponible. Por favor, selecciona otra.');
+        setValidando(false);
+      }
     } catch (err) {
+      console.error("Error al validar mesa:", err);
       setError(err.message || 'No se pudo validar la mesa. Intenta con otra mesa.');
       setValidando(false);
     }
@@ -90,17 +104,17 @@ const SeleccionMesa = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="mesaId" className="block mb-2 font-medium text-primary-light">
+              <label htmlFor="mesaInput" className="block mb-2 font-medium text-primary-light">
                 Número de Mesa
               </label>
               <input
                 type="text"
-                id="mesaId"
-                value={mesaId}
-                onChange={(e) => setMesaId(e.target.value)}
+                id="mesaInput"
+                value={mesaInput}
+                onChange={(e) => setMesaInput(e.target.value)}
                 disabled={loading}
                 className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-                placeholder="Ej. M001"
+                placeholder="Ej. 3 o M001"
                 aria-label="Ingresa el número de mesa"
               />
             </div>

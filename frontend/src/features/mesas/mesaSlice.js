@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getMesas, getMesaById, validarMesa, updateMesa, crearMesa } from '../../api/mesaApi';
+import { getMesas, getMesaById, validarMesa, updateMesa, crearMesa, cambiarEstadoMesa } from '../../api/mesaApi';
 import { saveSession, getSession } from '../../utils/localStorage';
 
 // Estado inicial
@@ -39,15 +39,24 @@ export const fetchMesaById = createAsyncThunk(
 
 export const validarMesaThunk = createAsyncThunk(
   'mesa/validar',
-  async (mesaId, { rejectWithValue }) => {
+  async (mesaIdentificador, { rejectWithValue }) => {
     try {
-      const response = await validarMesa(mesaId);
+      console.log("Iniciando validarMesaThunk con:", mesaIdentificador);
+      const response = await validarMesa(mesaIdentificador);
+      console.log("Respuesta de validarMesa:", response);
+      
+      // Solo guardar en sesión si la mesa está disponible
       if (response.disponible) {
-        saveSession({ mesaId });
+        saveSession({ mesaId: response.mesa.id });
       }
       return response;
     } catch (error) {
-      return rejectWithValue(error.message || 'Error al validar la mesa');
+      console.error('Error en validarMesaThunk:', error);
+      return rejectWithValue(
+        error.message || 
+        (error.response?.data?.message) || 
+        'Error al validar la mesa'
+      );
     }
   }
 );
@@ -60,6 +69,18 @@ export const actualizarMesa = createAsyncThunk(
       return response;
     } catch (error) {
       return rejectWithValue(error.message || 'Error al actualizar la mesa');
+    }
+  }
+);
+
+export const actualizarEstadoMesa = createAsyncThunk(
+  'mesa/actualizarEstado',
+  async ({ mesaId, estado }, { rejectWithValue }) => {
+    try {
+      const response = await cambiarEstadoMesa(mesaId, estado);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Error al actualizar el estado de la mesa');
     }
   }
 );
@@ -94,7 +115,9 @@ const mesaSlice = createSlice({
     clearMesaActual: (state) => {
       state.mesaActual = null;
       state.mesaId = null;
-      localStorage.removeItem('mesaId');
+      const session = getSession();
+      delete session.mesaId;
+      saveSession(session);
     }
   },
   extraReducers: (builder) => {
@@ -135,14 +158,20 @@ const mesaSlice = createSlice({
       })
       .addCase(validarMesaThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.mesaValidada = action.payload.disponible;
-        if (action.payload.disponible) {
-          state.mesaId = action.payload.mesa.id || action.meta.arg;
+        console.log("validarMesaThunk.fulfilled:", action.payload);
+        if (action.payload && action.payload.disponible) {
+          state.mesaValidada = true;
+          // Usar el ID real de la mesa (ObjectID), no el número
+          state.mesaId = action.payload.mesa.id;
           state.mesaActual = action.payload.mesa;
+        } else {
+          state.mesaValidada = false;
+          state.error = 'Esta mesa no está disponible. Por favor, selecciona otra.';
         }
       })
       .addCase(validarMesaThunk.rejected, (state, action) => {
         state.loading = false;
+        console.log("validarMesaThunk.rejected:", action.payload);
         state.error = action.payload;
         state.mesaValidada = false;
       })
@@ -163,6 +192,26 @@ const mesaSlice = createSlice({
         }
       })
       .addCase(actualizarMesa.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Actualizar estado de mesa
+      .addCase(actualizarEstadoMesa.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(actualizarEstadoMesa.fulfilled, (state, action) => {
+        state.loading = false;
+        state.mesaActual = action.payload;
+        
+        // Actualizar también en la lista completa de mesas
+        const index = state.mesas.findIndex(mesa => mesa.id === action.payload.id);
+        if (index !== -1) {
+          state.mesas[index] = action.payload;
+        }
+      })
+      .addCase(actualizarEstadoMesa.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

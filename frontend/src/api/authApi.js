@@ -23,7 +23,14 @@ export const registrarCliente = async (userData) => {
       ...userData,
       rol: 'cliente'
     });
-    return response.data;
+    
+    // Normalizar los datos para mantener la consistencia en la aplicación
+    const result = {
+      ...response.data,
+      usuario: response.data.user || response.data.usuario
+    };
+    
+    return result;
   } catch (error) {
     throw error.response?.data || { message: 'Error en el servidor' };
   }
@@ -32,9 +39,15 @@ export const registrarCliente = async (userData) => {
 // Login para cualquier tipo de usuario
 export const login = async (credentials) => {
   try {
-    console.log(credentials);
     const response = await axios.post(`${API_URL}/usuarios/login`, credentials);
-    return response.data;
+    
+    // Normalizar los datos para mantener la consistencia en la aplicación
+    const result = {
+      ...response.data,
+      usuario: response.data.user || response.data.usuario
+    };
+    
+    return result;
   } catch (error) {
     throw error.response?.data || { message: 'Error en el servidor' };
   }

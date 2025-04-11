@@ -17,31 +17,51 @@ const RegistroCliente = () => {
   const [submitting, setSubmitting] = useState(false);
   
   const navigate = useNavigate();
-  const { register, loading, error: authError } = useAuth();
-  const { mesaId, mesaActual, obtenerMesaPorId, loading: mesaLoading } = useMesa();
+  const { register, isAuthenticated, loading: authLoading, error: authError } = useAuth();
+  const { mesaId, mesaActual, obtenerMesaPorId, loading: mesaLoading, error: mesaError } = useMesa();
 
+  // Verificar autenticación
   useEffect(() => {
-    // Verificar si hay un ID de mesa seleccionado
-    if (!mesaId) {
-      navigate('/mesa/seleccion');
-      return;
+    if (isAuthenticated) {
+      navigate('/cliente/panel');
     }
+  }, [isAuthenticated, navigate]);
 
-    // Si tenemos el ID pero no los detalles, cargar los detalles
-    if (mesaId && !mesaActual) {
-      obtenerMesaPorId(mesaId).catch(() => {
-        setError('No se pudo obtener los detalles de la mesa. Por favor, selecciona otra.');
+  // Verificar mesa seleccionada
+  useEffect(() => {
+    const cargarMesa = async () => {
+      // Verificar si hay un ID de mesa seleccionado
+      if (!mesaId) {
         navigate('/mesa/seleccion');
-      });
-    }
-  }, [mesaId, mesaActual, navigate]);
+        return;
+      }
 
+      // Si tenemos el ID pero no los detalles, cargar los detalles
+      if (mesaId && !mesaActual) {
+        try {
+          await obtenerMesaPorId(mesaId);
+        } catch (err) {
+          console.error("Error al obtener detalles de mesa:", err);
+          setError('No se pudo obtener los detalles de la mesa. Por favor, selecciona otra.');
+          setTimeout(() => navigate('/mesa/seleccion'), 3000);
+        }
+      }
+    };
+
+    cargarMesa();
+  }, [mesaId, mesaActual, navigate, obtenerMesaPorId]);
+
+  // Gestionar errores
   useEffect(() => {
     if (authError) {
       setError(authError);
       setSubmitting(false);
     }
-  }, [authError]);
+    
+    if (mesaError) {
+      setError(mesaError);
+    }
+  }, [authError, mesaError]);
 
   const validateForm = () => {
     const errors = {};
@@ -93,19 +113,24 @@ const RegistroCliente = () => {
     setError('');
     
     try {
-      await register(formData, mesaId);
-      // El hook useAuth redirige automáticamente al panel del cliente
+      // Pasar el mesaId como parámetro al registro para asociar el usuario a la mesa
+      await register({
+        ...formData,
+        mesaId: mesaId
+      });
+      // La redirección la maneja useAuth cuando isAuthenticated cambia
     } catch (err) {
+      console.error("Error en registro:", err);
       setError(err.message || 'Error al registrar. Inténtalo nuevamente.');
       setSubmitting(false);
     }
   };
 
-  if (mesaLoading) {
+  if (mesaLoading || authLoading) {
     return (
       <HomeLayout>
         <div className="flex justify-center items-center h-[60vh]">
-          <Loader text="Cargando información de la mesa..." />
+          <Loader text={mesaLoading ? "Cargando información de la mesa..." : "Procesando registro..."} />
         </div>
       </HomeLayout>
     );
@@ -144,7 +169,7 @@ const RegistroCliente = () => {
               name="nombre"
               value={formData.nombre}
               onChange={handleChange}
-              disabled={loading || submitting}
+              disabled={authLoading || submitting}
               className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
               placeholder="Ingresa tu nombre completo"
             />
@@ -163,7 +188,7 @@ const RegistroCliente = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              disabled={loading || submitting}
+              disabled={authLoading || submitting}
               className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
               placeholder="ejemplo@correo.com"
             />
@@ -182,7 +207,7 @@ const RegistroCliente = () => {
               name="celular"
               value={formData.celular}
               onChange={handleChange}
-              disabled={loading || submitting}
+              disabled={authLoading || submitting}
               className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
               placeholder="Ingresa 9 dígitos"
               maxLength={9}
@@ -194,10 +219,10 @@ const RegistroCliente = () => {
           
           <button 
             type="submit"
-            disabled={loading || submitting}
+            disabled={authLoading || submitting}
             className="w-full mt-2 px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
           >
-            {loading || submitting ? 'Registrando...' : 'Registrarme'}
+            {authLoading || submitting ? 'Registrando...' : 'Registrarme'}
           </button>
         </form>
         

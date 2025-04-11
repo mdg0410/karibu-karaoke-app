@@ -1,91 +1,122 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { loginUser, registerUser, logoutUser, checkAuthStatus } from '../features/auth/authSlice';
+import { 
+  loginThunk, 
+  logoutThunk, 
+  registerThunk, 
+  checkAuthStatusThunk,
+  clearError 
+} from '../features/auth/authSlice';
 import { useNavigate } from 'react-router-dom';
-import { clearMesaActual } from '../features/mesas/mesaSlice';
 
 /**
  * Hook personalizado para manejar la autenticación
- * @returns {Object} Funciones y estados relacionados con la autenticación
+ * @returns {Object} Funciones y estados relacionados con autenticación
  */
 export const useAuth = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, token, isAuthenticated, loading, error } = useSelector((state) => state.auth);
-
+  const { user, isAuthenticated, loading, error, role } = useSelector((state) => state.auth);
+  
   /**
-   * Iniciar sesión
-   * @param {Object} credentials - Credenciales de usuario (email, password)
-   * @returns {Promise} Promesa que se resuelve cuando la sesión se inicia correctamente
+   * Iniciar sesión de usuario
+   * @param {Object} credentials - Credenciales de inicio de sesión
+   * @returns {Promise} Promesa que se resuelve con el usuario autenticado
    */
   const login = async (credentials) => {
-    const resultAction = await dispatch(loginUser(credentials));
-    
-    if (loginUser.fulfilled.match(resultAction)) {
-      const user = resultAction.payload.usuario;
-      
-      // Redireccionar según el rol del usuario
-      if (user.rol === 'admin') {
-        navigate('/admin/panel');
-      } else if (user.rol === 'trabajador') {
-        navigate('/staff/panel');
+    try {
+      const resultAction = await dispatch(loginThunk(credentials));
+      if (loginThunk.fulfilled.match(resultAction)) {
+        const userRole = resultAction.payload.user.role;
+        
+        // Redirigir según el rol
+        if (userRole === 'admin') {
+          navigate('/admin/panel');
+        } else if (userRole === 'trabajador') {
+          navigate('/staff/panel');
+        } else {
+          navigate('/cliente/panel');
+        }
+        
+        return resultAction.payload;
       }
-      
-      return resultAction.payload;
+      throw new Error(resultAction.payload || 'Error al iniciar sesión');
+    } catch (error) {
+      console.error("Error en login:", error);
+      throw error;
     }
-    
-    // Si hay un error, devuelve el error para manejarlo en el componente
-    return Promise.reject(resultAction.payload);
   };
-
+  
+  /**
+   * Cerrar sesión de usuario
+   * @returns {Promise} Promesa que se resuelve cuando se cierra la sesión
+   */
+  const logout = async () => {
+    try {
+      await dispatch(logoutThunk());
+      navigate('/');
+    } catch (error) {
+      console.error("Error en logout:", error);
+    }
+  };
+  
   /**
    * Registrar un nuevo usuario cliente
-   * @param {Object} userData - Datos del usuario (nombre, email, celular)
-   * @param {string} mesaId - ID de la mesa seleccionada
-   * @returns {Promise} Promesa que se resuelve cuando el registro es exitoso
+   * @param {Object} userData - Datos del usuario a registrar
+   * @returns {Promise} Promesa que se resuelve con el usuario registrado
    */
-  const register = async (userData, mesaId) => {
-    const resultAction = await dispatch(registerUser({
-      ...userData,
-      mesaId
-    }));
-    
-    if (registerUser.fulfilled.match(resultAction)) {
-      // Después del registro exitoso, redirigir al panel de cliente
-      navigate('/cliente/panel');
-      return resultAction.payload;
+  const register = async (userData) => {
+    try {
+      // Añadir contraseña por defecto para clientes si no está incluida
+      const userDataWithPassword = {
+        ...userData,
+        password: userData.password || 'password123',
+        role: 'cliente'
+      };
+      
+      const resultAction = await dispatch(registerThunk(userDataWithPassword));
+      if (registerThunk.fulfilled.match(resultAction)) {
+        navigate('/cliente/panel');
+        return resultAction.payload;
+      }
+      throw new Error(resultAction.payload || 'Error al registrar');
+    } catch (error) {
+      console.error("Error en register:", error);
+      throw error;
     }
-    
-    return Promise.reject(resultAction.payload);
   };
-
+  
   /**
-   * Cerrar sesión
-   */
-  const logout = () => {
-    dispatch(logoutUser());
-    dispatch(clearMesaActual());
-    navigate('/');
-  };
-
-  /**
-   * Verificar estado de autenticación
-   * @returns {Promise} Promesa que se resuelve cuando se verifica el token
+   * Verificar el estado de autenticación actual
+   * @returns {Promise} Promesa que se resuelve con el resultado de la verificación
    */
   const checkAuth = async () => {
-    const resultAction = await dispatch(checkAuthStatus());
-    return checkAuthStatus.fulfilled.match(resultAction);
+    try {
+      const resultAction = await dispatch(checkAuthStatusThunk());
+      return resultAction.payload;
+    } catch (error) {
+      console.error("Error en checkAuth:", error);
+      throw error;
+    }
   };
-
+  
+  /**
+   * Limpiar errores de autenticación
+   */
+  const limpiarError = () => {
+    dispatch(clearError());
+  };
+  
   return {
     user,
-    token,
     isAuthenticated,
     loading,
     error,
+    role,
     login,
-    register,
     logout,
-    checkAuth
+    register,
+    checkAuth,
+    limpiarError
   };
 };
 

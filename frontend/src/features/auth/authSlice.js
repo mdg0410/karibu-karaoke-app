@@ -12,13 +12,14 @@ const initialState = {
 };
 
 // Thunks asíncronos
-export const loginUser = createAsyncThunk(
+export const loginThunk = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await login(credentials);
+      // Guardar en localStorage
       saveSession({ 
-        user: response.usuario, 
+        user: response.usuario || response.user, 
         token: response.token 
       });
       return response;
@@ -28,13 +29,14 @@ export const loginUser = createAsyncThunk(
   }
 );
 
-export const registerUser = createAsyncThunk(
+export const registerThunk = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
       const response = await registrarCliente(userData);
+      // Guardar en localStorage
       saveSession({ 
-        user: response.usuario, 
+        user: response.usuario || response.user, 
         token: response.token 
       });
       return response;
@@ -44,7 +46,16 @@ export const registerUser = createAsyncThunk(
   }
 );
 
-export const checkAuthStatus = createAsyncThunk(
+export const logoutThunk = createAsyncThunk(
+  'auth/logout',
+  async (_, { dispatch }) => {
+    clearSession();
+    dispatch(logoutUser());
+    return true;
+  }
+);
+
+export const checkAuthStatusThunk = createAsyncThunk(
   'auth/checkStatus',
   async (_, { rejectWithValue }) => {
     try {
@@ -76,47 +87,47 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
       // Login
-      .addCase(loginUser.pending, (state) => {
+      .addCase(loginThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(loginUser.fulfilled, (state, action) => {
+      .addCase(loginThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.usuario;
+        state.user = action.payload.usuario || action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
       })
-      .addCase(loginUser.rejected, (state, action) => {
+      .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
       
       // Registro
-      .addCase(registerUser.pending, (state) => {
+      .addCase(registerThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(registerUser.fulfilled, (state, action) => {
+      .addCase(registerThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.usuario;
+        state.user = action.payload.usuario || action.payload.user;
         state.token = action.payload.token;
         state.isAuthenticated = true;
       })
-      .addCase(registerUser.rejected, (state, action) => {
+      .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
       
       // Verificar token
-      .addCase(checkAuthStatus.pending, (state) => {
+      .addCase(checkAuthStatusThunk.pending, (state) => {
         state.loading = true;
       })
-      .addCase(checkAuthStatus.fulfilled, (state, action) => {
+      .addCase(checkAuthStatusThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.usuario;
+        state.user = action.payload.usuario || action.payload.user;
         state.isAuthenticated = true;
       })
-      .addCase(checkAuthStatus.rejected, (state) => {
+      .addCase(checkAuthStatusThunk.rejected, (state) => {
         state.loading = false;
         state.user = null;
         state.token = null;

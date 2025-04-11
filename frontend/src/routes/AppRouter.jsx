@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setupAuthInterceptor } from '../api/authApi';
-import { checkAuthStatus } from '../features/auth/authSlice';
+import { checkAuthStatusThunk } from '../features/auth/authSlice';
 
 // Componentes de rutas protegidas
 import ProtectedRoute from './ProtectedRoute';
@@ -30,7 +30,7 @@ const AppRouter = () => {
     setupAuthInterceptor();
 
     // Verificar el estado de autenticación al cargar la aplicación
-    dispatch(checkAuthStatus()).catch(() => {
+    dispatch(checkAuthStatusThunk()).catch(() => {
       // Si hay un error, no hacer nada aquí, ya que el slice maneja la limpieza del estado
     });
   }, [dispatch]);
