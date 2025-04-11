@@ -288,6 +288,53 @@ export const cambiarEstadoMesa = async (req: Request, res: Response) => {
   }
 };
 
+// Ocupar una mesa disponible
+export const ocuparMesa = async (req: Request, res: Response) => {
+  try {
+    const mesaId = req.params.id;
+    
+    // Buscar la mesa
+    const mesa = await Mesa.findById(mesaId);
+    
+    if (!mesa) {
+      return res.status(404).json({
+        success: false,
+        message: 'Mesa no encontrada'
+      });
+    }
+    
+    // Verificar estado (aunque ya lo hace el middleware, doble verificación)
+    if (mesa.estado !== 'disponible') {
+      return res.status(400).json({
+        success: false,
+        message: 'La mesa no está disponible'
+      });
+    }
+    
+    // Cambiar estado a ocupada
+    mesa.estado = 'ocupada';
+    
+    // Guardar los cambios
+    await mesa.save();
+    
+    // Formatear la respuesta
+    const formattedMesa = formatMesaResponse(mesa);
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Mesa ocupada exitosamente',
+      mesa: formattedMesa
+    });
+  } catch (error) {
+    console.error('Error al ocupar mesa:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al ocupar la mesa',
+      error: (error as Error).message
+    });
+  }
+};
+
 // Obtener el historial de una mesa
 export const getHistorialMesa = async (req: Request, res: Response) => {
   try {
@@ -360,4 +407,4 @@ export const getMesasDisponibles = async (req: Request, res: Response) => {
       error: (error as Error).message
     });
   }
-}; 
+};

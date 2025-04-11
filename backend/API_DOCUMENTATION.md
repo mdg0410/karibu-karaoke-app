@@ -438,6 +438,38 @@ Los tokens son válidos por 24 horas. Para obtener un token, utiliza las rutas d
 }
 ```
 
+### Ocupar Mesa
+
+**Endpoint:** `POST /api/mesas/:id/ocupar`
+
+**Acceso:** Público
+
+**Descripción:** Verifica si una mesa está disponible y la marca como ocupada
+
+**Respuesta Exitosa:**
+```json
+{
+  "success": true,
+  "message": "Mesa ocupada exitosamente",
+  "mesa": {
+    "id": "<mesa_id>",
+    "numero": 5,
+    "capacidad": 4,
+    "estado": "ocupada",
+    "createdAt": "2023-01-01T12:00:00.000Z",
+    "updatedAt": "2023-01-02T13:00:00.000Z"
+  }
+}
+```
+
+**Respuesta de Error (Mesa no disponible):**
+```json
+{
+  "success": false,
+  "message": "La mesa no está disponible"
+}
+```
+
 ### Obtener Historial de Mesa
 
 **Endpoint:** `GET /api/mesas/:id/historial`
@@ -940,38 +972,6 @@ Los tokens son válidos por 24 horas. Para obtener un token, utiliza las rutas d
 ```
 
 ### Cambiar Estado de Pedido
-
-**Endpoint:** `PATCH /api/pedidos/:id/estado`
-
-**Acceso:** Staff, Admin
-
-**Descripción:** Actualiza el estado de un pedido
-
-**Body:**
-```json
-{
-  "estado": "completado",
-  "trabajadorId": "<user_id>",
-  "comentario": "Pedido entregado"
-}
-```
-
-**Respuesta Exitosa:**
-```json
-{
-  "message": "Estado del pedido actualizado exitosamente",
-  "pedido": {
-    "id": "<pedido_id>",
-    "numeroMesa": 5,
-    "clienteId": "<user_id>",
-    "estado": "completado",
-    "total": 22.47,
-    "historialCambios": [
-      {
-        "trabajadorId": "<user_id>",
-        "fechaCambio": "2023-01-02T14:00:00.000Z",
-        "estadoAnterior": "pendiente",
-        "estadoNuevo": "en_proceso",
         "comentario": "Actualización de pedido"
       },
       {

@@ -9,6 +9,7 @@ const router = express.Router();
 // Rutas públicas (sin autenticación)
 router.get('/disponibles', validateMesaFilters, mesaController.getMesasDisponibles);
 router.get('/:id', verificarMesaExiste, mesaController.getMesaById);
+router.post('/:id/ocupar', verificarMesaExiste, verificarEstadoMesa(['disponible']), mesaController.ocuparMesa);
 
 // Middleware para verificar el token en todas las rutas
 router.use(verificarToken);
@@ -35,4 +36,4 @@ router.get('/:id/historial',
   mesaController.getHistorialMesa
 );
 
-export default router; 
+export default router;
