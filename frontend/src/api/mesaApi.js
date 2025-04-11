@@ -25,7 +25,7 @@ export const getMesaById = async (mesaId) => {
 // Validar disponibilidad de mesa
 export const validarMesa = async (mesaId) => {
   try {
-    const response = await axios.get(`${API_URL}/mesas/${mesaId}/validar`);
+    const response = await axios.get(`${API_URL}/mesas/${mesaId}`);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Error en el servidor' };

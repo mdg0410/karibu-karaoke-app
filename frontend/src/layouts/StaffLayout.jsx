@@ -1,75 +1,147 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
 
+/**
+ * Layout para las páginas del personal de staff
+ * 
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.children - Contenido del layout
+ * @returns {JSX.Element} Layout del panel de staff
+ */
 const StaffLayout = ({ children }) => {
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const handleLogout = () => {
-    // Eliminar datos de sesión
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    
-    // Redirigir a la página de login de staff
+    logout();
     navigate('/staff/login');
   };
 
   return (
-    <div className="min-h-screen bg-karaoke-black text-white">
-      <header className="bg-karaoke-black py-4 px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-xl md:text-2xl font-bold text-primary bg-karaoke-navy px-4 py-2 rounded-xl shadow-neumorph transition-all duration-300">
-          Karibu Karaoke - Panel de Staff
-        </h1>
-        <div className="flex items-center flex-wrap gap-3 md:gap-4">
-          <span className="text-sm md:text-base bg-karaoke-darkgray px-3 py-1 rounded-lg shadow-neumorph-inset" aria-label="Nombre de usuario">
-            Usuario: {localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).nombre : ''}
-          </span>
-          <button 
-            onClick={handleLogout}
-            className="px-3 md:px-4 py-2 bg-karaoke-darkgray text-primary rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-            aria-label="Cerrar sesión"
-          >
-            Cerrar Sesión
-          </button>
+    <div className="flex flex-col min-h-screen bg-karaoke-black">
+      {/* Header */}
+      <header className="bg-karaoke-darkgray py-3 shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <Link to="/staff/panel" className="text-2xl font-bold text-primary">
+              Karibu <span className="text-white">Staff</span>
+            </Link>
+
+            {/* Role badge - Visible en móvil y desktop */}
+            <div className="bg-blue-800/60 px-3 py-1 rounded-full shadow-neumorph-inset">
+              <span className="text-sm font-medium text-blue-100">Trabajador</span>
+            </div>
+
+            {/* Hamburger menu button - Solo visible en móvil */}
+            <button 
+              className="lg:hidden text-white focus:outline-none" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
+            </button>
+
+            {/* Desktop navigation - Oculto en móvil */}
+            <nav className="hidden lg:flex items-center space-x-6">
+              <Link to="/staff/mesas" className="text-white hover:text-primary transition-colors">
+                Gestión Mesas
+              </Link>
+              <Link to="/staff/clientes" className="text-white hover:text-primary transition-colors">
+                Clientes
+              </Link>
+              <Link to="/staff/canciones" className="text-white hover:text-primary transition-colors">
+                Canciones
+              </Link>
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300"
+              >
+                Cerrar Sesión
+              </button>
+            </nav>
+          </div>
+
+          {/* Mobile navigation - Visible solo cuando está abierto */}
+          {mobileMenuOpen && (
+            <nav className="lg:hidden mt-4 pb-2 pt-1 border-t border-karaoke-gray/30">
+              <ul className="space-y-2">
+                <li>
+                  <Link 
+                    to="/staff/mesas" 
+                    className="block py-2 text-white hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Gestión Mesas
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/staff/clientes" 
+                    className="block py-2 text-white hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Clientes
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/staff/canciones" 
+                    className="block py-2 text-white hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Canciones
+                  </Link>
+                </li>
+                <li>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left block py-2 text-primary hover:text-primary-light transition-colors"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </header>
-      <nav className="bg-karaoke-navy py-2 px-4 md:px-6 shadow-neumorph overflow-x-auto">
-        <ul className="flex space-x-4 md:space-x-6 min-w-max">
-          <li>
-            <Link 
-              to="/staff/panel" 
-              className="text-white hover:text-primary py-2 px-3 rounded-lg hover:bg-karaoke-navyLight hover:shadow-neumorph-inset transition-all duration-300 inline-block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              aria-label="Ir al dashboard"
-            >
-              Dashboard
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/staff/panel" 
-              className="text-white hover:text-primary py-2 px-3 rounded-lg hover:bg-karaoke-navyLight hover:shadow-neumorph-inset transition-all duration-300 inline-block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              aria-label="Ver mesas"
-            >
-              Mesas
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/staff/panel" 
-              className="text-white hover:text-primary py-2 px-3 rounded-lg hover:bg-karaoke-navyLight hover:shadow-neumorph-inset transition-all duration-300 inline-block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              aria-label="Ver pedidos"
-            >
-              Pedidos
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <main className="container mx-auto px-4 py-6 md:py-8 animate-fade-in">
-        <div className="bg-karaoke-darkgray p-4 md:p-6 rounded-2xl shadow-neumorph">
-          {children}
+
+      {/* User info bar */}
+      <div className="bg-karaoke-gray/50 py-2 border-b border-karaoke-gray shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <div className="text-white">
+              <span className="text-primary-light">Usuario: </span>
+              <span className="font-medium">{user?.nombre || 'Staff'}</span>
+            </div>
+            <div className="text-white text-sm">
+              <span className="text-primary-light">Última actividad: </span>
+              <span>{new Date().toLocaleTimeString()}</span>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto px-4 py-6">
+        {children}
       </main>
-      <footer className="bg-karaoke-black py-4 px-4 md:px-6 text-center">
-        <p className="text-primary-light text-sm md:text-base">© 2025 Karibu Karaoke - Panel de Staff</p>
+
+      {/* Footer */}
+      <footer className="bg-karaoke-darkgray py-4 text-white">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-2 md:mb-0">
+              <h3 className="text-lg font-bold text-primary">Karibu Karaoke Staff</h3>
+            </div>
+            <div className="text-xs text-gray-400">
+              &copy; {new Date().getFullYear()} Karibu Karaoke. Panel de Staff
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );

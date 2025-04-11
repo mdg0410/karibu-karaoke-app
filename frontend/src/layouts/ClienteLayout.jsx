@@ -1,76 +1,157 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
+import useMesa from '../hooks/useMesa';
 
+/**
+ * Layout para las páginas del cliente
+ * 
+ * @param {Object} props - Propiedades del componente
+ * @param {ReactNode} props.children - Contenido del layout
+ * @returns {JSX.Element} Layout del panel de cliente
+ */
 const ClienteLayout = ({ children }) => {
+  const { user, logout } = useAuth();
+  const { mesaActual } = useMesa();
   const navigate = useNavigate();
-  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const handleLogout = () => {
-    // Eliminar datos de sesión
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('mesaId');
-    
-    // Redirigir a la página de inicio
+    logout();
     navigate('/');
   };
 
   return (
-    <div className="min-h-screen bg-karaoke-black text-white">
-      <header className="bg-karaoke-black py-4 px-4 md:px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-        <h1 className="text-xl md:text-2xl font-bold text-primary bg-karaoke-darkgray px-4 py-2 rounded-xl shadow-neumorph transition-all duration-300">
-          Karibu Karaoke
-        </h1>
-        <div className="flex items-center flex-wrap gap-3 md:gap-4">
-          <span className="text-sm md:text-base bg-karaoke-darkgray px-3 py-1 rounded-lg shadow-neumorph-inset" aria-label="Número de mesa">
-            Mesa: {localStorage.getItem('mesaId')}
-          </span>
-          <button 
-            onClick={handleLogout}
-            className="px-3 md:px-4 py-2 bg-karaoke-darkgray text-primary rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-            aria-label="Cerrar sesión"
-          >
-            Cerrar Sesión
-          </button>
+    <div className="flex flex-col min-h-screen bg-karaoke-black">
+      {/* Header */}
+      <header className="bg-karaoke-darkgray py-3 shadow-lg">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <Link to="/cliente/panel" className="text-2xl font-bold text-primary">
+              Karibu <span className="text-white">Karaoke</span>
+            </Link>
+
+            {/* Mesa Info - Visible en móvil y desktop */}
+            <div className="bg-karaoke-gray px-3 py-1 rounded-full shadow-neumorph-inset">
+              <span className="text-sm text-primary-light">Mesa: </span>
+              <span className="text-sm font-medium text-primary">{mesaActual?.numero || 'N/A'}</span>
+            </div>
+
+            {/* Hamburger menu button - Solo visible en móvil */}
+            <button 
+              className="lg:hidden text-white focus:outline-none" 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+              </svg>
+            </button>
+
+            {/* Desktop navigation - Oculto en móvil */}
+            <nav className="hidden lg:flex items-center space-x-6">
+              <Link to="/cliente/canciones" className="text-white hover:text-primary transition-colors">
+                Canciones
+              </Link>
+              <Link to="/cliente/pedidos" className="text-white hover:text-primary transition-colors">
+                Pedidos
+              </Link>
+              <Link to="/cliente/perfil" className="text-white hover:text-primary transition-colors">
+                Mi Perfil
+              </Link>
+              <button 
+                onClick={handleLogout}
+                className="px-4 py-2 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300"
+              >
+                Cerrar Sesión
+              </button>
+            </nav>
+          </div>
+
+          {/* Mobile navigation - Visible solo cuando está abierto */}
+          {mobileMenuOpen && (
+            <nav className="lg:hidden mt-4 pb-2 pt-1 border-t border-karaoke-gray/30">
+              <ul className="space-y-2">
+                <li>
+                  <Link 
+                    to="/cliente/canciones" 
+                    className="block py-2 text-white hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Canciones
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/cliente/pedidos" 
+                    className="block py-2 text-white hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Pedidos
+                  </Link>
+                </li>
+                <li>
+                  <Link 
+                    to="/cliente/perfil" 
+                    className="block py-2 text-white hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Mi Perfil
+                  </Link>
+                </li>
+                <li>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left block py-2 text-primary hover:text-primary-light transition-colors"
+                  >
+                    Cerrar Sesión
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </header>
-      <nav className="bg-karaoke-gray py-2 px-4 md:px-6 shadow-neumorph overflow-x-auto">
-        <ul className="flex space-x-4 md:space-x-6 min-w-max">
-          <li>
-            <Link 
-              to="/cliente/panel" 
-              className="text-white hover:text-primary py-2 px-3 rounded-lg hover:bg-karaoke-darkgray hover:shadow-neumorph-inset transition-all duration-300 inline-block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              aria-label="Ir a inicio"
-            >
-              Inicio
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/cliente/panel" 
-              className="text-white hover:text-primary py-2 px-3 rounded-lg hover:bg-karaoke-darkgray hover:shadow-neumorph-inset transition-all duration-300 inline-block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              aria-label="Ver canciones"
-            >
-              Canciones
-            </Link>
-          </li>
-          <li>
-            <Link 
-              to="/cliente/panel" 
-              className="text-white hover:text-primary py-2 px-3 rounded-lg hover:bg-karaoke-darkgray hover:shadow-neumorph-inset transition-all duration-300 inline-block focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
-              aria-label="Ver pedidos"
-            >
-              Pedidos
-            </Link>
-          </li>
-        </ul>
-      </nav>
-      <main className="container mx-auto px-4 py-6 md:py-8 animate-fade-in">
-        <div className="bg-karaoke-darkgray p-4 md:p-6 rounded-2xl shadow-neumorph">
-          {children}
+
+      {/* User info bar */}
+      <div className="bg-karaoke-gray/50 py-2 border-b border-karaoke-gray shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center">
+            <div className="text-white">
+              <span className="text-primary-light">Bienvenido: </span>
+              <span className="font-medium">{user?.nombre || 'Cliente'}</span>
+            </div>
+          </div>
         </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto px-4 py-6">
+        {children}
       </main>
-      <footer className="bg-karaoke-black py-4 px-4 md:px-6 text-center">
-        <p className="text-primary-light text-sm md:text-base">© 2025 Karibu Karaoke - Todos los derechos reservados</p>
+
+      {/* Footer */}
+      <footer className="bg-karaoke-darkgray py-4 text-white">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-2 md:mb-0">
+              <h3 className="text-lg font-bold text-primary">Karibu Karaoke</h3>
+            </div>
+            <div className="flex space-x-4 mb-2 md:mb-0">
+              <Link to="/cliente/canciones" className="text-sm text-white hover:text-primary transition-colors">
+                Canciones
+              </Link>
+              <Link to="/cliente/pedidos" className="text-sm text-white hover:text-primary transition-colors">
+                Pedidos
+              </Link>
+              <Link to="/cliente/ayuda" className="text-sm text-white hover:text-primary transition-colors">
+                Ayuda
+              </Link>
+            </div>
+            <div className="text-xs text-gray-400">
+              &copy; {new Date().getFullYear()} Karibu Karaoke
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );

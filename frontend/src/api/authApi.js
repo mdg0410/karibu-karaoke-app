@@ -32,7 +32,8 @@ export const registrarCliente = async (userData) => {
 // Login para cualquier tipo de usuario
 export const login = async (credentials) => {
   try {
-    const response = await axios.post(`${API_URL}/auth/login`, credentials);
+    console.log(credentials);
+    const response = await axios.post(`${API_URL}/usuarios/login`, credentials);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Error en el servidor' };
@@ -42,7 +43,7 @@ export const login = async (credentials) => {
 // Verificar token (útil para mantener la sesión activa)
 export const verificarToken = async () => {
   try {
-    const response = await axios.get(`${API_URL}/auth/perfil`);
+    const response = await axios.get(`${API_URL}/usuarios/perfil`);
     return response.data;
   } catch (error) {
     throw error.response?.data || { message: 'Error en el servidor' };
