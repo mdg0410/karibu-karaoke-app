@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
-import useMesa from '../../hooks/useMesa';
 import HomeLayout from '../../layouts/HomeLayout';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
@@ -18,38 +17,13 @@ const RegistroCliente = () => {
   
   const navigate = useNavigate();
   const { register, isAuthenticated, loading: authLoading, error: authError } = useAuth();
-  const { mesaId, mesaActual, obtenerMesaPorId, loading: mesaLoading, error: mesaError } = useMesa();
 
   // Verificar autenticación
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/cliente/panel');
+      navigate('/mesa/seleccion');
     }
   }, [isAuthenticated, navigate]);
-
-  // Verificar mesa seleccionada
-  useEffect(() => {
-    const cargarMesa = async () => {
-      // Verificar si hay un ID de mesa seleccionado
-      if (!mesaId) {
-        navigate('/mesa/seleccion');
-        return;
-      }
-
-      // Si tenemos el ID pero no los detalles, cargar los detalles
-      if (mesaId && !mesaActual) {
-        try {
-          await obtenerMesaPorId(mesaId);
-        } catch (err) {
-          console.error("Error al obtener detalles de mesa:", err);
-          setError('No se pudo obtener los detalles de la mesa. Por favor, selecciona otra.');
-          setTimeout(() => navigate('/mesa/seleccion'), 3000);
-        }
-      }
-    };
-
-    cargarMesa();
-  }, [mesaId, mesaActual, navigate, obtenerMesaPorId]);
 
   // Gestionar errores
   useEffect(() => {
@@ -57,11 +31,7 @@ const RegistroCliente = () => {
       setError(authError);
       setSubmitting(false);
     }
-    
-    if (mesaError) {
-      setError(mesaError);
-    }
-  }, [authError, mesaError]);
+  }, [authError]);
 
   const validateForm = () => {
     const errors = {};
@@ -113,11 +83,7 @@ const RegistroCliente = () => {
     setError('');
     
     try {
-      // Pasar el mesaId como parámetro al registro para asociar el usuario a la mesa
-      await register({
-        ...formData,
-        mesaId: mesaId
-      });
+      await register(formData);
       // La redirección la maneja useAuth cuando isAuthenticated cambia
     } catch (err) {
       console.error("Error en registro:", err);
@@ -126,11 +92,11 @@ const RegistroCliente = () => {
     }
   };
 
-  if (mesaLoading || authLoading) {
+  if (authLoading) {
     return (
       <HomeLayout>
         <div className="flex justify-center items-center h-[60vh]">
-          <Loader text={mesaLoading ? "Cargando información de la mesa..." : "Procesando registro..."} />
+          <Loader text="Procesando registro..." />
         </div>
       </HomeLayout>
     );
@@ -140,14 +106,6 @@ const RegistroCliente = () => {
     <HomeLayout>
       <div className="max-w-md mx-auto bg-karaoke-gray p-5 md:p-6 rounded-xl shadow-neumorph animate-fade-in">
         <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-primary">Registro de Cliente</h2>
-        
-        {mesaActual && (
-          <div className="mb-6 p-3 bg-karaoke-darkgray rounded-lg shadow-neumorph-inset">
-            <p className="text-primary text-center">
-              Mesa seleccionada: <span className="font-bold">{mesaActual.numero || mesaId}</span>
-            </p>
-          </div>
-        )}
         
         {error && (
           <Alert 

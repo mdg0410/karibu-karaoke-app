@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import HomeLayout from '../../layouts/HomeLayout';
 import useMesa from '../../hooks/useMesa';
+import useAuth from '../../hooks/useAuth';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
 
@@ -12,8 +13,14 @@ const SeleccionMesa = () => {
   const navigate = useNavigate();
   const params = useParams();
   const { validarMesaDisponible, seleccionarMesa, loading, error: mesaError, limpiarError } = useMesa();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
+    if (!isAuthenticated || !user) {
+      navigate('/registro');
+      return;
+    }
+
     // Limpiar errores al montar el componente
     limpiarError();
     
@@ -21,7 +28,7 @@ const SeleccionMesa = () => {
     if (mesaError) {
       setError(mesaError);
     }
-  }, [limpiarError, mesaError]);
+  }, [limpiarError, mesaError, isAuthenticated, user, navigate]);
 
   useEffect(() => {
     // Si hay un ID de mesa en los parámetros de la URL, lo validamos automáticamente
@@ -48,15 +55,12 @@ const SeleccionMesa = () => {
     setValidando(true);
     
     try {
-      console.log('Validando mesa:', mesaIdentificador);
       const resultado = await validarMesaDisponible(mesaIdentificador);
       
       if (resultado && resultado.disponible) {
-        // Usar el ID de la mesa (ObjectID) para la selección, no el número
-        console.log('Mesa válida, seleccionando:', resultado.mesa.id);
-        seleccionarMesa(resultado.mesa.id);
+        await seleccionarMesa(resultado.mesa.id);
+        navigate('/cliente/panel');
       } else {
-        console.log('Mesa no disponible:', resultado);
         setError('Esta mesa no está disponible. Por favor, selecciona otra.');
         setValidando(false);
       }

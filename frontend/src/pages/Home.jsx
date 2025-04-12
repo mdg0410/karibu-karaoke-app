@@ -6,7 +6,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const handleComenzar = () => {
-    navigate('/mesa/seleccion');
+    navigate('/registro');
   };
 
   return (
@@ -19,8 +19,8 @@ const Home = () => {
         <div className="max-w-2xl mb-8 md:mb-12 bg-karaoke-gray p-4 md:p-8 rounded-xl shadow-neumorph animate-fade-in">
           <h3 className="text-xl md:text-2xl font-semibold mb-4 text-primary-light">Guía Rápida</h3>
           <ol className="text-left list-decimal ml-4 md:ml-6 space-y-2 text-sm md:text-base">
+            <li className="text-white">Regístrate con tus datos personales</li>
             <li className="text-white">Selecciona tu mesa o escanea el código QR de tu mesa</li>
-            <li className="text-white">Registra tus datos personales</li>
             <li className="text-white">Explora nuestro catálogo de canciones</li>
             <li className="text-white">Realiza tus pedidos de alimentos y bebidas</li>
             <li className="text-white">¡Disfruta de tu experiencia en Karibu Karaoke!</li>

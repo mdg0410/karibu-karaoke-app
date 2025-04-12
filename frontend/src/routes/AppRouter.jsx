@@ -10,12 +10,12 @@ import RoleBasedRoute from './RoleBasedRoute';
 
 // Páginas públicas
 import Home from '../pages/Home';
-import SeleccionMesa from '../pages/cliente/SeleccionMesa';
 import RegistroCliente from '../pages/cliente/RegistroCliente';
 import StaffLogin from '../pages/staff/StaffLogin';
 import AdminLogin from '../pages/admin/AdminLogin';
 
-// Páginas protegidas
+// Páginas protegidas de cliente
+import SeleccionMesa from '../pages/cliente/SeleccionMesa';
 import ClientePanel from '../pages/cliente/ClientePanel';
 import StaffPanel from '../pages/staff/StaffPanel';
 import AdminPanel from '../pages/admin/AdminPanel';
@@ -26,10 +26,7 @@ const AppRouter = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Configurar el interceptor para incluir el token en las peticiones
     setupAuthInterceptor();
-
-    // Verificar el estado de autenticación al cargar la aplicación
     dispatch(checkAuthStatusThunk()).catch(() => {
       // Si hay un error, no hacer nada aquí, ya que el slice maneja la limpieza del estado
     });
@@ -39,15 +36,14 @@ const AppRouter = () => {
     <Routes>
       {/* Rutas públicas */}
       <Route path="/" element={<Home />} />
-      <Route path="/mesa/seleccion" element={<SeleccionMesa />} />
-      <Route path="/mesa/:id" element={<SeleccionMesa />} />
       <Route path="/registro" element={<RegistroCliente />} />
       <Route path="/staff/login" element={<StaffLogin />} />
       <Route path="/admin/login" element={<AdminLogin />} />
 
       {/* Rutas protegidas para clientes */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<RoleBasedRoute requiredRole="cliente" redirectPath="/" />}>
+        <Route element={<RoleBasedRoute requiredRole="cliente" redirectPath="/registro" />}>
+          <Route path="/mesa/seleccion" element={<SeleccionMesa />} />
           <Route path="/cliente/panel" element={<ClientePanel />} />
         </Route>
       </Route>

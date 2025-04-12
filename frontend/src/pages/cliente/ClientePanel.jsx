@@ -15,7 +15,7 @@ const ClientePanel = () => {
   useEffect(() => {
     // Verificar si el usuario está autenticado
     if (!isAuthenticated || !user) {
-      navigate('/');
+      navigate('/registro');
       return;
     }
 
@@ -28,10 +28,11 @@ const ClientePanel = () => {
     // Cargar detalles de la mesa si no están disponibles
     if (mesaId && !mesaActual) {
       obtenerMesaPorId(mesaId).catch(err => {
-        setError('No se pudo obtener los detalles de la mesa. Inténtalo nuevamente.');
+        setError('No se pudo obtener los detalles de la mesa. Por favor, selecciona una mesa nuevamente.');
+        navigate('/mesa/seleccion');
       });
     }
-  }, [isAuthenticated, user, mesaId, mesaActual, navigate]);
+  }, [isAuthenticated, user, mesaId, mesaActual, navigate, obtenerMesaPorId]);
 
   if (authLoading || mesaLoading) {
     return (

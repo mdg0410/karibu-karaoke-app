@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
+import useMesa from '../hooks/useMesa';
 
 /**
  * Layout para la página principal y páginas públicas
@@ -11,6 +12,7 @@ import useAuth from '../hooks/useAuth';
  */
 const HomeLayout = ({ children }) => {
   const { isAuthenticated, user, logout } = useAuth();
+  const { mesaId } = useMesa();
 
   return (
     <div className="flex flex-col min-h-screen bg-karaoke-black">
@@ -24,8 +26,8 @@ const HomeLayout = ({ children }) => {
           <nav className="flex items-center space-x-4">
             {!isAuthenticated ? (
               <>
-                <Link to="/mesa/seleccion" className="text-white hover:text-primary transition-colors">
-                  Iniciar Experiencia
+                <Link to="/registro" className="text-white hover:text-primary transition-colors">
+                  Comenzar Experiencia
                 </Link>
                 <Link to="/staff/login" className="text-white hover:text-primary transition-colors">
                   Acceso Staff
@@ -37,9 +39,17 @@ const HomeLayout = ({ children }) => {
             ) : (
               <>
                 {user?.rol === 'cliente' && (
-                  <Link to="/cliente/panel" className="text-white hover:text-primary transition-colors">
-                    Mi Panel
-                  </Link>
+                  <>
+                    {!mesaId ? (
+                      <Link to="/mesa/seleccion" className="text-white hover:text-primary transition-colors">
+                        Seleccionar Mesa
+                      </Link>
+                    ) : (
+                      <Link to="/cliente/panel" className="text-white hover:text-primary transition-colors">
+                        Mi Panel
+                      </Link>
+                    )}
+                  </>
                 )}
                 {user?.rol === 'trabajador' && (
                   <Link to="/staff/panel" className="text-white hover:text-primary transition-colors">
