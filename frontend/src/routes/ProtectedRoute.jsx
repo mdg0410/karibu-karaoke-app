@@ -1,22 +1,26 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { hasActiveSession } from '../utils/localStorage';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import useAuth from '../hooks/useAuth';
+import useMesa from '../hooks/useMesa';
 
-/**
- * Componente para proteger rutas que requieren autenticación
- * Verifica si existe un token válido en localStorage
- * 
- * @returns {JSX.Element} El componente hijo (Outlet) o redirección a inicio
- */
 const ProtectedRoute = () => {
-  const isAuthenticated = hasActiveSession();
+  const { isAuthenticated, user } = useAuth();
+  const { mesaId } = useMesa();
+  const location = useLocation();
 
-  // Si no está autenticado, redirigir a la página principal
+  // Si no está autenticado, redirigir a registro
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/registro" />;
   }
 
-  // Si está autenticado, renderizar los componentes hijos
+  // Si es un cliente y está intentando acceder al panel sin mesa seleccionada
+  if (user?.rol === 'cliente' && 
+      location.pathname === '/cliente/panel' && 
+      !mesaId) {
+    return <Navigate to="/mesa/seleccion" />;
+  }
+
+  // Si todo está bien, mostrar la ruta protegida
   return <Outlet />;
 };
 

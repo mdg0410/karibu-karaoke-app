@@ -115,9 +115,14 @@ const mesaSlice = createSlice({
     clearMesaActual: (state) => {
       state.mesaActual = null;
       state.mesaId = null;
+      state.mesaValidada = false;
+      state.error = null;
+      // Limpiar mesaId del localStorage
       const session = getSession();
-      delete session.mesaId;
-      saveSession(session);
+      if (session.mesaId) {
+        delete session.mesaId;
+        saveSession(session);
+      }
     }
   },
   extraReducers: (builder) => {
@@ -161,7 +166,6 @@ const mesaSlice = createSlice({
         console.log("validarMesaThunk.fulfilled:", action.payload);
         if (action.payload && action.payload.disponible) {
           state.mesaValidada = true;
-          // Usar el ID real de la mesa (ObjectID), no el número
           state.mesaId = action.payload.mesa.id;
           state.mesaActual = action.payload.mesa;
         } else {

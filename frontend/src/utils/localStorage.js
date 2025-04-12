@@ -2,11 +2,11 @@
  * Funciones para manipular el localStorage y gestionar la sesión de usuario
  */
 
-// Constantes para las keys de localStorage
+// Claves para localStorage
 export const STORAGE_KEYS = {
-  USER: 'user',
-  TOKEN: 'token',
-  MESA_ID: 'mesaId'
+  AUTH: 'karibu_auth',
+  MESA: 'karibu_mesa',
+  TOKEN: 'karibu_token'
 };
 
 /**
@@ -16,10 +16,14 @@ export const STORAGE_KEYS = {
  * @param {string} sessionData.token - Token JWT
  * @param {string} sessionData.mesaId - ID de la mesa (opcional)
  */
-export const saveSession = ({ user, token, mesaId }) => {
-  if (user) localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-  if (token) localStorage.setItem(STORAGE_KEYS.TOKEN, token);
-  if (mesaId) localStorage.setItem(STORAGE_KEYS.MESA_ID, mesaId);
+export const saveSession = (data) => {
+  try {
+    const currentData = getSession();
+    const updatedData = { ...currentData, ...data };
+    localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(updatedData));
+  } catch (error) {
+    console.error('Error guardando sesión:', error);
+  }
 };
 
 /**
@@ -27,11 +31,13 @@ export const saveSession = ({ user, token, mesaId }) => {
  * @returns {Object} Objeto con user, token y mesaId
  */
 export const getSession = () => {
-  return {
-    user: JSON.parse(localStorage.getItem(STORAGE_KEYS.USER) || 'null'),
-    token: localStorage.getItem(STORAGE_KEYS.TOKEN),
-    mesaId: localStorage.getItem(STORAGE_KEYS.MESA_ID)
-  };
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.AUTH);
+    return data ? JSON.parse(data) : {};
+  } catch (error) {
+    console.error('Error obteniendo sesión:', error);
+    return {};
+  }
 };
 
 /**
@@ -39,8 +45,8 @@ export const getSession = () => {
  * @returns {Object|null} Objeto usuario o null si no existe
  */
 export const getUser = () => {
-  const userData = localStorage.getItem(STORAGE_KEYS.USER);
-  return userData ? JSON.parse(userData) : null;
+  const session = getSession();
+  return session.user || null;
 };
 
 /**
@@ -48,7 +54,8 @@ export const getUser = () => {
  * @returns {string|null} Token o null si no existe
  */
 export const getToken = () => {
-  return localStorage.getItem(STORAGE_KEYS.TOKEN);
+  const session = getSession();
+  return session.token;
 };
 
 /**
@@ -56,7 +63,8 @@ export const getToken = () => {
  * @returns {string|null} ID de la mesa o null si no existe
  */
 export const getMesaId = () => {
-  return localStorage.getItem(STORAGE_KEYS.MESA_ID);
+  const session = getSession();
+  return session.mesaId || null;
 };
 
 /**
@@ -64,7 +72,7 @@ export const getMesaId = () => {
  * @returns {boolean} true si está autenticado, false si no
  */
 export const isAuthenticated = () => {
-  return !!localStorage.getItem(STORAGE_KEYS.TOKEN);
+  return !!getToken();
 };
 
 /**
@@ -81,12 +89,27 @@ export const hasRole = (rol) => {
  * Elimina los datos de sesión del localStorage
  * @param {boolean} includeMesa - Si debe eliminar también el ID de mesa
  */
-export const clearSession = (includeMesa = true) => {
-  localStorage.removeItem(STORAGE_KEYS.USER);
-  localStorage.removeItem(STORAGE_KEYS.TOKEN);
-  
-  if (includeMesa) {
-    localStorage.removeItem(STORAGE_KEYS.MESA_ID);
+export const clearSession = (clearAll = true) => {
+  try {
+    if (clearAll) {
+      // Limpiar todo el almacenamiento local relacionado con la aplicación
+      Object.values(STORAGE_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+      });
+    } else {
+      // Solo limpiar los datos de autenticación pero mantener otras preferencias
+      const session = getSession();
+      const cleanedSession = {};
+      // Mantener solo las preferencias que no sean de autenticación o mesa
+      Object.entries(session).forEach(([key, value]) => {
+        if (!['user', 'token', 'mesaId'].includes(key)) {
+          cleanedSession[key] = value;
+        }
+      });
+      localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(cleanedSession));
+    }
+  } catch (error) {
+    console.error('Error limpiando sesión:', error);
   }
 };
 

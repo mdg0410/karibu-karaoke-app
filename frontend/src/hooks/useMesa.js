@@ -129,14 +129,13 @@ export const useMesa = () => {
    */
   const seleccionarMesa = (id) => {
     console.log('Seleccionando mesa con ID:', id);
-    
     // Si no hay ID, no hacemos nada
     if (!id) {
       console.error('Error: No se proporcionó un ID de mesa válido');
       return;
     }
     
-    // Guardamos el ID de la mesa y redirigimos
+    // Guardamos el ID de la mesa
     dispatch(setMesaId(id));
     saveSession({ mesaId: id });
     navigate('/registro');

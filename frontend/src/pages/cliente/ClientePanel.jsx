@@ -9,11 +9,11 @@ import Loader from '../../components/common/Loader';
 const ClientePanel = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const { user, isAuthenticated, authLoading } = useAuth();
   const { mesaId, mesaActual, obtenerMesaPorId, loading: mesaLoading } = useMesa();
 
   useEffect(() => {
-    // Verificar si el usuario está autenticado
+    // Verificar autenticación
     if (!isAuthenticated || !user) {
       navigate('/registro');
       return;
@@ -25,12 +25,19 @@ const ClientePanel = () => {
       return;
     }
 
-    // Cargar detalles de la mesa si no están disponibles
+    // Si hay mesaId pero no tenemos los detalles de la mesa, cargarlos
     if (mesaId && !mesaActual) {
       obtenerMesaPorId(mesaId).catch(err => {
+        console.error('Error al obtener detalles de la mesa:', err);
         setError('No se pudo obtener los detalles de la mesa. Por favor, selecciona una mesa nuevamente.');
         navigate('/mesa/seleccion');
       });
+    }
+
+    // Si la mesa actual existe pero no está disponible, redirigir a selección
+    if (mesaActual && mesaActual.estado !== 'ocupada') {
+      setError('La mesa seleccionada ya no está disponible. Por favor, selecciona otra mesa.');
+      navigate('/mesa/seleccion');
     }
   }, [isAuthenticated, user, mesaId, mesaActual, navigate, obtenerMesaPorId]);
 

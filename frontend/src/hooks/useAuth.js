@@ -7,6 +7,7 @@ import {
   clearError 
 } from '../features/auth/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { clearMesaActual } from '../features/mesas/mesaSlice';
 
 /**
  * Hook personalizado para manejar la autenticación
@@ -26,7 +27,7 @@ export const useAuth = () => {
     try {
       const resultAction = await dispatch(loginThunk(credentials));
       if (loginThunk.fulfilled.match(resultAction)) {
-        const userRole = resultAction.payload.user.role;
+        const userRole = resultAction.payload.usuario?.rol || resultAction.payload.user?.rol;
         
         // Redirigir según el rol
         if (userRole === 'admin') {
@@ -34,7 +35,7 @@ export const useAuth = () => {
         } else if (userRole === 'trabajador') {
           navigate('/staff/panel');
         } else {
-          navigate('/cliente/panel');
+          navigate('/registro');
         }
         
         return resultAction.payload;
@@ -52,6 +53,8 @@ export const useAuth = () => {
    */
   const logout = async () => {
     try {
+      // Limpiar el estado de la mesa antes de cerrar sesión
+      dispatch(clearMesaActual());
       await dispatch(logoutThunk());
       navigate('/');
     } catch (error) {
@@ -75,7 +78,10 @@ export const useAuth = () => {
       
       const resultAction = await dispatch(registerThunk(userDataWithPassword));
       if (registerThunk.fulfilled.match(resultAction)) {
-        navigate('/cliente/panel');
+        // Después del registro, redirigir a selección de mesa si no hay mesaId
+        if (!userData.mesaId) {
+          navigate('/mesa/seleccion');
+        }
         return resultAction.payload;
       }
       throw new Error(resultAction.payload || 'Error al registrar');
