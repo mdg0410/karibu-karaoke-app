@@ -37,6 +37,7 @@ const AppRouter = () => {
       {/* Rutas públicas */}
       <Route path="/" element={<Home />} />
       <Route path="/registro" element={<RegistroCliente />} />
+      <Route path="/registro/:mesaId" element={<RegistroCliente />} />
       <Route path="/staff/login" element={<StaffLogin />} />
       <Route path="/admin/login" element={<AdminLogin />} />
 
@@ -44,6 +45,7 @@ const AppRouter = () => {
       <Route element={<ProtectedRoute />}>
         <Route element={<RoleBasedRoute requiredRole="cliente" redirectPath="/registro" />}>
           <Route path="/mesa/seleccion" element={<SeleccionMesa />} />
+          <Route path="/mesa/seleccion/:mesaId" element={<SeleccionMesa />} />
           <Route path="/cliente/panel" element={<ClientePanel />} />
         </Route>
       </Route>

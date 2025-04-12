@@ -11,7 +11,7 @@ const SeleccionMesa = () => {
   const [error, setError] = useState('');
   const [validando, setValidando] = useState(false);
   const navigate = useNavigate();
-  const params = useParams();
+  const { mesaId: mesaIdParam } = useParams();
   const { validarMesaDisponible, seleccionarMesa, loading, error: mesaError, limpiarError } = useMesa();
   const { isAuthenticated, user } = useAuth();
 
@@ -28,16 +28,13 @@ const SeleccionMesa = () => {
     if (mesaError) {
       setError(mesaError);
     }
-  }, [limpiarError, mesaError, isAuthenticated, user, navigate]);
 
-  useEffect(() => {
-    // Si hay un ID de mesa en los parámetros de la URL, lo validamos automáticamente
-    if (params.id && !validando) {
-      setMesaInput(params.id);
-      setValidando(true);
-      handleValidarMesa(params.id);
+    // Si hay un ID de mesa en los parámetros, intentar validarla automáticamente
+    if (mesaIdParam && !validando) {
+      setMesaInput(mesaIdParam);
+      handleValidarMesa(mesaIdParam);
     }
-  }, [params.id]);
+  }, [isAuthenticated, user, navigate, limpiarError, mesaError, mesaIdParam]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,20 +60,30 @@ const SeleccionMesa = () => {
       } else {
         setError('Esta mesa no está disponible. Por favor, selecciona otra.');
         setValidando(false);
+        // Solo limpiamos el input si no venía de la URL
+        if (!mesaIdParam) {
+          setMesaInput('');
+        }
       }
     } catch (err) {
       console.error("Error al validar mesa:", err);
       setError(err.message || 'No se pudo validar la mesa. Intenta con otra mesa.');
       setValidando(false);
+      // Solo limpiamos el input si no venía de la URL
+      if (!mesaIdParam) {
+        setMesaInput('');
+      }
     }
   };
 
   return (
     <HomeLayout>
       <div className="max-w-md mx-auto bg-karaoke-gray p-5 md:p-6 rounded-xl shadow-neumorph animate-fade-in">
-        <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-primary">Selección de Mesa</h2>
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-primary">
+          {validando ? 'Validando Mesa' : 'Selección de Mesa'}
+        </h2>
         
-        {loading && (
+        {(loading || validando) && (
           <div className="text-center mb-6">
             <Loader text="Validando mesa..." />
           </div>
@@ -91,20 +98,44 @@ const SeleccionMesa = () => {
           />
         )}
         
-        {params.id ? (
-          <div className="text-center mb-6 animate-fade-in">
-            <p className="mb-4 bg-karaoke-darkgray p-3 rounded-lg shadow-neumorph-inset text-primary">
-              Mesa seleccionada: <span className="font-bold">{params.id}</span>
-            </p>
-            <button 
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-              aria-label="Continuar con la mesa seleccionada"
-            >
-              {loading ? 'Validando...' : 'Continuar'}
-            </button>
-          </div>
+        {mesaIdParam ? (
+          <>
+            <div className="text-center mb-6 animate-fade-in">
+              <p className="mb-4 bg-karaoke-darkgray p-3 rounded-lg shadow-neumorph-inset text-primary">
+                Validando mesa: <span className="font-bold">{mesaIdParam}</span>
+              </p>
+              {error && (
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-primary-light mb-3">
+                    Seleccionar otra mesa
+                  </h3>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="mesaInput" className="block mb-2 font-medium text-primary-light">
+                        Número de Mesa
+                      </label>
+                      <input
+                        type="text"
+                        id="mesaInput"
+                        value={mesaInput}
+                        onChange={(e) => setMesaInput(e.target.value)}
+                        disabled={loading || validando}
+                        className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
+                        placeholder="Ej. 3 o M001"
+                      />
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={loading || validando}
+                      className="w-full px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
+                    >
+                      {loading || validando ? 'Validando...' : 'Validar Mesa'}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -116,20 +147,17 @@ const SeleccionMesa = () => {
                 id="mesaInput"
                 value={mesaInput}
                 onChange={(e) => setMesaInput(e.target.value)}
-                disabled={loading}
+                disabled={loading || validando}
                 className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
                 placeholder="Ej. 3 o M001"
-                aria-label="Ingresa el número de mesa"
               />
             </div>
-            
             <button 
               type="submit"
-              disabled={loading}
+              disabled={loading || validando}
               className="w-full px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-              aria-label="Validar y continuar con la mesa seleccionada"
             >
-              {loading ? 'Validando...' : 'Validar Mesa'}
+              {loading || validando ? 'Validando...' : 'Validar Mesa'}
             </button>
           </form>
         )}

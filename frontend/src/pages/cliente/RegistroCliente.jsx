@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
 import HomeLayout from '../../layouts/HomeLayout';
 import Alert from '../../components/common/Alert';
@@ -16,14 +16,20 @@ const RegistroCliente = () => {
   const [submitting, setSubmitting] = useState(false);
   
   const navigate = useNavigate();
+  const { mesaId } = useParams();
   const { register, isAuthenticated, loading: authLoading, error: authError } = useAuth();
 
-  // Verificar autenticación
+  // Verificar autenticación y redirigir
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/mesa/seleccion');
+      // Si hay un mesaId en la URL, lo pasamos a SeleccionMesa
+      if (mesaId) {
+        navigate(`/mesa/seleccion/${mesaId}`);
+      } else {
+        navigate('/mesa/seleccion');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, mesaId]);
 
   // Gestionar errores
   useEffect(() => {
@@ -63,7 +69,6 @@ const RegistroCliente = () => {
       [name]: value
     }));
     
-    // Limpiar error específico cuando el usuario empieza a corregir
     if (formErrors[name]) {
       setFormErrors(prev => ({
         ...prev,
@@ -84,7 +89,7 @@ const RegistroCliente = () => {
     
     try {
       await register(formData);
-      // La redirección la maneja useAuth cuando isAuthenticated cambia
+      // La redirección la maneja el efecto de autenticación
     } catch (err) {
       console.error("Error en registro:", err);
       setError(err.message || 'Error al registrar. Inténtalo nuevamente.');
@@ -106,6 +111,14 @@ const RegistroCliente = () => {
     <HomeLayout>
       <div className="max-w-md mx-auto bg-karaoke-gray p-5 md:p-6 rounded-xl shadow-neumorph animate-fade-in">
         <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-primary">Registro de Cliente</h2>
+        
+        {mesaId && (
+          <div className="mb-4 bg-karaoke-darkgray p-3 rounded-lg shadow-neumorph-inset">
+            <p className="text-center text-primary">
+              Mesa preseleccionada: <span className="font-bold">{mesaId}</span>
+            </p>
+          </div>
+        )}
         
         {error && (
           <Alert 
