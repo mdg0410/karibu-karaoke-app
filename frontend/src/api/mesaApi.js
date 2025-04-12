@@ -116,3 +116,19 @@ export const crearMesa = async (mesaData) => {
     throw error.response?.data || { message: 'Error en el servidor' };
   }
 };
+
+// Ocupar una mesa (cambiar estado a ocupada)
+export const ocuparMesa = async (mesaId, usuarioId) => {
+  try {
+    const config = getAuthConfig();
+    const response = await axios.post(
+      `${API_URL}/mesas/${mesaId}/ocupar`, 
+      { usuarioId }, 
+      config
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error en ocuparMesa:", error);
+    throw error.response?.data || error || { message: 'Error al ocupar la mesa' };
+  }
+};

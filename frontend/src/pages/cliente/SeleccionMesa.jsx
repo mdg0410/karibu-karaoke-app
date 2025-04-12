@@ -12,7 +12,7 @@ const SeleccionMesa = () => {
   const [validando, setValidando] = useState(false);
   const navigate = useNavigate();
   const { mesaId: mesaIdParam } = useParams();
-  const { validarMesaDisponible, seleccionarMesa, loading, error: mesaError, limpiarError } = useMesa();
+  const { validarMesaDisponible, ocuparMesa, loading, error: mesaError, limpiarError } = useMesa();
   const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
@@ -52,11 +52,21 @@ const SeleccionMesa = () => {
     setValidando(true);
     
     try {
+      // Primero validamos que la mesa esté disponible
       const resultado = await validarMesaDisponible(mesaIdentificador);
       
       if (resultado && resultado.disponible) {
-        await seleccionarMesa(resultado.mesa.id);
-        navigate('/cliente/panel');
+        try {
+          // Si la mesa está disponible, usamos el nuevo endpoint para ocuparla
+          await ocuparMesa(resultado.mesa.id, user.id);
+          
+          // Si la ocupación es exitosa, redirigimos al panel del cliente
+          navigate('/cliente/panel');
+        } catch (err) {
+          console.error("Error al ocupar mesa:", err);
+          setError(err.message || 'No se pudo ocupar la mesa. Por favor, inténtalo de nuevo.');
+          setValidando(false);
+        }
       } else {
         setError('Esta mesa no está disponible. Por favor, selecciona otra.');
         setValidando(false);

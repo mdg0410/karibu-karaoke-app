@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getMesas, getMesaById, validarMesa, updateMesa, crearMesa, cambiarEstadoMesa } from '../../api/mesaApi';
+import { getMesas, getMesaById, validarMesa, updateMesa, crearMesa, cambiarEstadoMesa, ocuparMesa } from '../../api/mesaApi';
 import { saveSession, getSession } from '../../utils/localStorage';
 
 // Estado inicial
@@ -93,6 +93,31 @@ export const crearNuevaMesa = createAsyncThunk(
       return response;
     } catch (error) {
       return rejectWithValue(error.message || 'Error al crear la mesa');
+    }
+  }
+);
+
+export const ocuparMesaThunk = createAsyncThunk(
+  'mesa/ocupar',
+  async ({ mesaId, usuarioId }, { rejectWithValue }) => {
+    try {
+      const response = await ocuparMesa(mesaId, usuarioId);
+      
+      if (response.success) {
+        // Guardar el ID de la mesa ocupada en la sesión
+        const currentSession = getSession();
+        saveSession({ ...currentSession, mesaId: response.mesa.id });
+        return response.mesa;
+      } else {
+        return rejectWithValue(response.message || 'No se pudo ocupar la mesa');
+      }
+    } catch (error) {
+      console.error('Error en ocuparMesaThunk:', error);
+      return rejectWithValue(
+        error.message || 
+        (error.response?.data?.message) || 
+        'Error al ocupar la mesa'
+      );
     }
   }
 );
@@ -230,6 +255,26 @@ const mesaSlice = createSlice({
         state.mesas.push(action.payload);
       })
       .addCase(crearNuevaMesa.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Ocupar mesa
+      .addCase(ocuparMesaThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(ocuparMesaThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.mesaActual = action.payload;
+        
+        // Actualizar también en la lista completa de mesas
+        const index = state.mesas.findIndex(mesa => mesa.id === action.payload.id);
+        if (index !== -1) {
+          state.mesas[index] = action.payload;
+        }
+      })
+      .addCase(ocuparMesaThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

@@ -5,6 +5,7 @@ import {
   validarMesaThunk, 
   actualizarMesa,
   actualizarEstadoMesa,
+  ocuparMesaThunk,
   setMesaId,
   clearMesaError,
   resetMesaValidacion,
@@ -124,6 +125,28 @@ export const useMesa = () => {
   };
   
   /**
+   * Ocupar una mesa usando el nuevo endpoint
+   * @param {string} mesaId - ID de la mesa a ocupar
+   * @param {string} usuarioId - ID del usuario que ocupa la mesa
+   * @returns {Promise} Promesa que se resuelve cuando la mesa se ocupa correctamente
+   */
+  const ocuparMesa = async (mesaId, usuarioId) => {
+    try {
+      const resultAction = await dispatch(ocuparMesaThunk({ mesaId, usuarioId }));
+      if (ocuparMesaThunk.fulfilled.match(resultAction)) {
+        // Una vez ocupada la mesa, la guardamos en la sesión y redirigimos al panel de cliente
+        const currentSession = getSession();
+        saveSession({ ...currentSession, mesaId: resultAction.payload.id });
+        return resultAction.payload;
+      }
+      throw new Error(resultAction.payload || 'Error al ocupar la mesa');
+    } catch (error) {
+      console.error('Error en ocuparMesa:', error);
+      throw error;
+    }
+  };
+  
+  /**
    * Seleccionar una mesa y guardarla en localStorage
    * @param {string} id - ID de la mesa a seleccionar
    */
@@ -174,6 +197,7 @@ export const useMesa = () => {
     validarMesaDisponible,
     actualizarDatosMesa,
     cambiarEstadoDeMesa,
+    ocuparMesa,
     seleccionarMesa,
     limpiarError,
     reiniciarValidacion,
