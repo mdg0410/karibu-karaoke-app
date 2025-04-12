@@ -292,6 +292,7 @@ export const cambiarEstadoMesa = async (req: Request, res: Response) => {
 export const ocuparMesa = async (req: Request, res: Response) => {
   try {
     const mesaId = req.params.id;
+    const { usuarioId } = req.body;
     
     // Buscar la mesa
     const mesa = await Mesa.findById(mesaId);
@@ -313,6 +314,13 @@ export const ocuparMesa = async (req: Request, res: Response) => {
     
     // Cambiar estado a ocupada
     mesa.estado = 'ocupada';
+    
+    // Agregar registro al historial
+    mesa.historial.push({
+      usuarioId: new mongoose.Types.ObjectId(usuarioId),
+      fechaInicio: new Date(),
+      estado: 'ocupada'
+    });
     
     // Guardar los cambios
     await mesa.save();
