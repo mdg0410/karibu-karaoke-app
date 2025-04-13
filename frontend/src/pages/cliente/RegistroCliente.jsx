@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import useAuth from '../../hooks/useAuth';
+import useMesa from '../../hooks/useMesa';
 import HomeLayout from '../../layouts/HomeLayout';
 import Alert from '../../components/common/Alert';
 import Loader from '../../components/common/Loader';
@@ -14,22 +15,57 @@ const RegistroCliente = () => {
   const [formErrors, setFormErrors] = useState({});
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [mesaInfo, setMesaInfo] = useState(null);
+  const [cargandoMesa, setCargandoMesa] = useState(false);
   
   const navigate = useNavigate();
   const { mesaId } = useParams();
   const { register, isAuthenticated, loading: authLoading, error: authError } = useAuth();
+  const { validarMesaDisponible } = useMesa();
+
+  // Guardar mesaId en localStorage cuando se carga el componente
+  useEffect(() => {
+    if (mesaId) {
+      // Guardar el mesaId en localStorage con una clave específica
+      localStorage.setItem('mesaIdPreseleccionada', mesaId);
+      console.log('Mesa ID guardada en localStorage:', mesaId);
+    }
+  }, [mesaId]);
+
+  // Cargar información de la mesa solo al montar el componente
+  useEffect(() => {
+    // Función para obtener información de la mesa
+    const obtenerInfoMesa = async () => {
+      if (mesaId) {
+        setCargandoMesa(true);
+        try {
+          const resultado = await validarMesaDisponible(mesaId);
+          if (resultado && resultado.disponible) {
+            setMesaInfo(resultado.mesa);
+            // También guardamos la información completa de la mesa
+            localStorage.setItem('mesaInfoPreseleccionada', JSON.stringify(resultado.mesa));
+          }
+        } catch (err) {
+          console.error("Error al obtener información de la mesa:", err);
+        } finally {
+          setCargandoMesa(false);
+        }
+      }
+    };
+
+    // Solo ejecutar la función al montar el componente
+    obtenerInfoMesa();
+    
+    // Array de dependencias vacío para asegurar que solo se ejecute una vez al montar
+  }, []); // ⬅️ Array de dependencias vacío
 
   // Verificar autenticación y redirigir
   useEffect(() => {
     if (isAuthenticated) {
-      // Si hay un mesaId en la URL, lo pasamos a SeleccionMesa
-      if (mesaId) {
-        navigate(`/mesa/seleccion/${mesaId}`);
-      } else {
-        navigate('/mesa/seleccion');
-      }
+      // Ahora que estamos usando localStorage, podemos simplificar esta redirección
+      navigate('/mesa/seleccion');
     }
-  }, [isAuthenticated, navigate, mesaId]);
+  }, [isAuthenticated, navigate]);
 
   // Gestionar errores
   useEffect(() => {
@@ -97,11 +133,13 @@ const RegistroCliente = () => {
     }
   };
 
-  if (authLoading) {
+  // Solo mostrar el loader cuando estamos enviando el formulario o cargando el auth
+  // No mostrar el loader cuando solo estamos cargando la información de la mesa
+  if (authLoading || submitting) {
     return (
       <HomeLayout>
         <div className="flex justify-center items-center h-[60vh]">
-          <Loader text="Procesando registro..." />
+          <Loader text="Procesando información..." />
         </div>
       </HomeLayout>
     );
@@ -112,10 +150,17 @@ const RegistroCliente = () => {
       <div className="max-w-md mx-auto bg-karaoke-gray p-5 md:p-6 rounded-xl shadow-neumorph animate-fade-in">
         <h2 className="text-xl md:text-2xl font-bold mb-6 text-center text-primary">Registro de Cliente</h2>
         
-        {mesaId && (
+        {/* Mostrar indicador de carga de mesa dentro del formulario, no pantalla completa */}
+        {cargandoMesa && (
+          <div className="mb-4 text-center">
+            <Loader text="Cargando información de mesa..." size="small" />
+          </div>
+        )}
+        
+        {mesaId && mesaInfo && (
           <div className="mb-4 bg-karaoke-darkgray p-3 rounded-lg shadow-neumorph-inset">
             <p className="text-center text-primary">
-              Mesa preseleccionada: <span className="font-bold">{mesaId}</span>
+              Mesa preseleccionada: <span className="font-bold">{mesaInfo.numero}</span>
             </p>
           </div>
         )}

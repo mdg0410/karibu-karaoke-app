@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import HomeLayout from '../../layouts/HomeLayout';
 import useMesa from '../../hooks/useMesa';
 import useAuth from '../../hooks/useAuth';
@@ -10,33 +10,85 @@ const SeleccionMesa = () => {
   const [mesaInput, setMesaInput] = useState('');
   const [error, setError] = useState('');
   const [validando, setValidando] = useState(false);
+  const [mesaPreseleccionada, setMesaPreseleccionada] = useState(null);
+  
   const navigate = useNavigate();
-  const { mesaId: mesaIdParam } = useParams();
-  const { validarMesaDisponible, ocuparMesa, loading, error: mesaError, limpiarError } = useMesa();
+  const { ocuparMesa, loading, error: mesaError, limpiarError } = useMesa();
   const { isAuthenticated, user } = useAuth();
 
+  // Verificar autenticación
   useEffect(() => {
     if (!isAuthenticated || !user) {
       navigate('/registro');
-      return;
     }
+  }, [isAuthenticated, user, navigate]);
 
-    // Limpiar errores al montar el componente
-    limpiarError();
-    
-    // Si hay un error en el estado de Redux, mostrarlo
+  // Obtener el ID de mesa del localStorage al montar el componente
+  useEffect(() => {
+    const mesaIdGuardada = localStorage.getItem('mesaIdPreseleccionada');
+    if (mesaIdGuardada) {
+      console.log('Mesa ID obtenida de localStorage:', mesaIdGuardada);
+      setMesaPreseleccionada(mesaIdGuardada);
+      
+      // También podemos intentar obtener la información completa de la mesa
+      try {
+        const mesaInfoGuardada = JSON.parse(localStorage.getItem('mesaInfoPreseleccionada'));
+        if (mesaInfoGuardada) {
+          console.log('Información de mesa encontrada en localStorage:', mesaInfoGuardada);
+        }
+      } catch (err) {
+        console.error('Error al analizar información de mesa guardada:', err);
+      }
+    } else {
+      console.log('No se encontró mesaId en localStorage');
+    }
+  }, []);
+
+  // Validación automática (una sola vez al montar)
+  useEffect(() => {
+    const validarMesaAutomaticamente = async () => {
+      // Solo proceder si hay una mesa preseleccionada y el usuario está autenticado
+      if (mesaPreseleccionada && isAuthenticated && user) {
+        console.log('Validando mesa automáticamente con ID:', mesaPreseleccionada);
+        setValidando(true);
+        limpiarError();
+        
+        try {
+          // Llamar directamente a ocuparMesa con el ID que ya tenemos
+          await ocuparMesa(mesaPreseleccionada, user.id);
+          
+          // Limpiar localStorage después de ocupar la mesa exitosamente
+          localStorage.removeItem('mesaIdPreseleccionada');
+          localStorage.removeItem('mesaInfoPreseleccionada');
+          
+          // Redirigir al panel del cliente
+          navigate('/cliente/panel');
+        } catch (err) {
+          console.error("Error al ocupar mesa automáticamente:", err);
+          setError(err.message || 'Esta mesa no está disponible. Por favor, selecciona otra.');
+          setMesaInput('');
+          setValidando(false);
+          
+          // Si hay un error, también limpiar localStorage
+          localStorage.removeItem('mesaIdPreseleccionada');
+          localStorage.removeItem('mesaInfoPreseleccionada');
+        }
+      }
+    };
+
+    validarMesaAutomaticamente();
+  }, [mesaPreseleccionada, isAuthenticated, user, ocuparMesa, navigate, limpiarError]);
+
+  // Manejar errores del estado global
+  useEffect(() => {
     if (mesaError) {
       setError(mesaError);
+      setValidando(false);
     }
+  }, [mesaError]);
 
-    // Si hay un ID de mesa en los parámetros, intentar validarla automáticamente
-    if (mesaIdParam && !validando) {
-      setMesaInput(mesaIdParam);
-      handleValidarMesa(mesaIdParam);
-    }
-  }, [isAuthenticated, user, navigate, limpiarError, mesaError, mesaIdParam]);
-
-  const handleSubmit = async (e) => {
+  // Función para validar mesa manualmente
+  const handleValidarMesa = async (e) => {
     e.preventDefault();
     
     if (!mesaInput.trim()) {
@@ -44,47 +96,36 @@ const SeleccionMesa = () => {
       return;
     }
     
-    handleValidarMesa(mesaInput);
-  };
-
-  const handleValidarMesa = async (mesaIdentificador) => {
-    setError('');
     setValidando(true);
+    setError('');
     
     try {
-      // Primero validamos que la mesa esté disponible
-      const resultado = await validarMesaDisponible(mesaIdentificador);
-      
-      if (resultado && resultado.disponible) {
-        try {
-          // Si la mesa está disponible, usamos el nuevo endpoint para ocuparla
-          await ocuparMesa(resultado.mesa.id, user.id);
-          
-          // Si la ocupación es exitosa, redirigimos al panel del cliente
-          navigate('/cliente/panel');
-        } catch (err) {
-          console.error("Error al ocupar mesa:", err);
-          setError(err.message || 'No se pudo ocupar la mesa. Por favor, inténtalo de nuevo.');
-          setValidando(false);
-        }
-      } else {
-        setError('Esta mesa no está disponible. Por favor, selecciona otra.');
-        setValidando(false);
-        // Solo limpiamos el input si no venía de la URL
-        if (!mesaIdParam) {
-          setMesaInput('');
-        }
-      }
+      // Llamar directamente a ocuparMesa con el input del usuario
+      await ocuparMesa(mesaInput, user.id);
+      // Si no hay error, redirigir al panel
+      navigate('/cliente/panel');
     } catch (err) {
-      console.error("Error al validar mesa:", err);
-      setError(err.message || 'No se pudo validar la mesa. Intenta con otra mesa.');
+      console.error("Error al ocupar mesa:", err);
+      setError(err.message || 'Esta mesa no está disponible. Por favor, selecciona otra.');
       setValidando(false);
-      // Solo limpiamos el input si no venía de la URL
-      if (!mesaIdParam) {
-        setMesaInput('');
-      }
     }
   };
+
+  // Mostrar pantalla de carga mientras se valida
+  if (loading || (validando && mesaPreseleccionada)) {
+    return (
+      <HomeLayout>
+        <div className="flex flex-col justify-center items-center h-[60vh]">
+          <Loader text="Validando mesa..." />
+          {mesaPreseleccionada && (
+            <p className="mt-4 text-center text-white">
+              Mesa preseleccionada: <span className="font-bold text-primary">{mesaPreseleccionada}</span>
+            </p>
+          )}
+        </div>
+      </HomeLayout>
+    );
+  }
 
   return (
     <HomeLayout>
@@ -93,7 +134,7 @@ const SeleccionMesa = () => {
           {validando ? 'Validando Mesa' : 'Selección de Mesa'}
         </h2>
         
-        {(loading || validando) && (
+        {validando && (
           <div className="text-center mb-6">
             <Loader text="Validando mesa..." />
           </div>
@@ -108,69 +149,29 @@ const SeleccionMesa = () => {
           />
         )}
         
-        {mesaIdParam ? (
-          <>
-            <div className="text-center mb-6 animate-fade-in">
-              <p className="mb-4 bg-karaoke-darkgray p-3 rounded-lg shadow-neumorph-inset text-primary">
-                Validando mesa: <span className="font-bold">{mesaIdParam}</span>
-              </p>
-              {error && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-primary-light mb-3">
-                    Seleccionar otra mesa
-                  </h3>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                      <label htmlFor="mesaInput" className="block mb-2 font-medium text-primary-light">
-                        Número de Mesa
-                      </label>
-                      <input
-                        type="text"
-                        id="mesaInput"
-                        value={mesaInput}
-                        onChange={(e) => setMesaInput(e.target.value)}
-                        disabled={loading || validando}
-                        className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-                        placeholder="Ej. 3 o M001"
-                      />
-                    </div>
-                    <button 
-                      type="submit"
-                      disabled={loading || validando}
-                      className="w-full px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-                    >
-                      {loading || validando ? 'Validando...' : 'Validar Mesa'}
-                    </button>
-                  </form>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="mesaInput" className="block mb-2 font-medium text-primary-light">
-                Número de Mesa
-              </label>
-              <input
-                type="text"
-                id="mesaInput"
-                value={mesaInput}
-                onChange={(e) => setMesaInput(e.target.value)}
-                disabled={loading || validando}
-                className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-                placeholder="Ej. 3 o M001"
-              />
-            </div>
-            <button 
-              type="submit"
-              disabled={loading || validando}
-              className="w-full px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
-            >
-              {loading || validando ? 'Validando...' : 'Validar Mesa'}
-            </button>
-          </form>
-        )}
+        <form onSubmit={handleValidarMesa} className="space-y-4">
+          <div>
+            <label htmlFor="mesaInput" className="block mb-2 font-medium text-primary-light">
+              Número de Mesa
+            </label>
+            <input
+              type="text"
+              id="mesaInput"
+              value={mesaInput}
+              onChange={(e) => setMesaInput(e.target.value)}
+              disabled={validando}
+              className="w-full px-4 py-2 bg-karaoke-darkgray text-white rounded-lg shadow-neumorph-inset focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
+              placeholder="Ej. 3 o M001"
+            />
+          </div>
+          <button 
+            type="submit"
+            disabled={validando}
+            className="w-full px-4 py-3 bg-karaoke-darkgray text-primary font-semibold rounded-lg shadow-neumorph hover:shadow-neumorph-inset transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 disabled:opacity-50"
+          >
+            {validando ? 'Validando...' : 'Validar Mesa'}
+          </button>
+        </form>
         
         <div className="mt-6 text-center">
           <p className="mb-2 text-primary-light">¿Tienes un código QR?</p>
